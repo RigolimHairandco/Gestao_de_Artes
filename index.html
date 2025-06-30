@@ -83,7 +83,7 @@
                                 <label className="text-sm font-bold text-gray-600 block">Email</label>
                                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md mt-1" required />
                             </div>
-                             <div>
+                            <div>
                                 <label className="text-sm font-bold text-gray-600 block">Senha</label>
                                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md mt-1" required />
                             </div>
@@ -228,8 +228,11 @@
                 const taskDocRef = db.collection("tasks").doc(initialTask.id);
                 const unsubscribe = taskDocRef.onSnapshot((doc) => {
                     if (doc.exists) {
-                        setTask({ id: doc.id, ...doc.data() });
-                        setAttachments(doc.data().approvalAttachments || []);
+                        const data = doc.data();
+                        // <!-- History Change: Ensure artHistory is an array for sorting -->
+                        data.artHistory = data.artHistory || [];
+                        setTask({ id: doc.id, ...data });
+                        setAttachments(data.approvalAttachments || []);
                     }
                 });
                 return () => unsubscribe();
@@ -266,11 +269,11 @@
 
                         if (attachmentToReplace) {
                              updatedAttachments = currentAttachments.map(att => {
-                                if(att.name === attachmentToReplace.name){
+                                 if(att.name === attachmentToReplace.name){
                                      return { ...att, url: imageUrl, status: 'pending', alterationNotes: '', uploadedAt: new Date().toISOString(), version: (att.version || 1) + 1, originalName: file.name };
-                                }
-                                return att;
-                            });
+                                 }
+                                 return att;
+                             });
                         } else {
                             const artNumber = (currentAttachments.length || 0) + 1;
                             const newAttachment = { 
@@ -323,17 +326,30 @@
                 setAttachmentToDelete(null);
             };
             
+            // <!-- History Change: Modified function to log history -->
             const handleAttachmentStatusChange = async (indexToUpdate, newStatus, notes = '') => {
                 const updatedAttachments = attachments.map((att, index) => {
                     if (index === indexToUpdate) { return { ...att, status: newStatus, alterationNotes: notes }; }
                     return att;
                 });
-                await onUpdate(task.id, { approvalAttachments: updatedAttachments });
+
+                const changedArt = attachments[indexToUpdate];
+                const historyEntry = {
+                    artName: changedArt.name,
+                    version: changedArt.version || 1,
+                    status: newStatus === 'approved' ? 'Aprovado' : `Alteração Solicitada`,
+                    notes: notes,
+                    timestamp: new Date()
+                };
+                
+                await onUpdate(task.id, { 
+                    approvalAttachments: updatedAttachments,
+                    artHistory: firebase.firestore.FieldValue.arrayUnion(historyEntry)
+                });
             };
 
             const handleReturnForAdjustment = async () => {
-                const rejectedArts = attachments.filter(a => a.status === 'rejected').map(a => `${a.name} (v${a.version || 1}): ${a.alterationNotes || 'Sem notas.'}`).join('\n');
-                const newHistoryEntry = { notes: `Solicitada alteração para:\n${rejectedArts}`, date: new Date().toISOString() };
+                const newHistoryEntry = { notes: `Devolvido para ajuste pelo solicitante.`, date: new Date().toISOString() };
                 await onUpdate(task.id, { status: 'Em Andamento', alterationHistory: firebase.firestore.FieldValue.arrayUnion(newHistoryEntry) });
                 onClose();
             };
@@ -362,13 +378,13 @@
             const someArtRejected = attachments && attachments.some(att => att.status === 'rejected');
 
             const formatDate = (ts) => { if (!ts) return 'Sem data'; const date = new Date(ts.seconds * 1000); const userTimezoneOffset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR'); };
-            const formatHistoryDate = (isoDate) => isoDate ? new Date(isoDate).toLocaleString('pt-BR') : '';
+            const formatHistoryDate = (ts) => ts ? new Date(ts.seconds * 1000).toLocaleString('pt-BR') : '';
             const priorityColors = { 'Alta': 'text-red-600', 'Média': 'text-yellow-600', 'Baixa': 'text-green-600' };
             const renderAttachments = (text) => { if (!text) return 'Nenhum anexo fornecido.'; const urlRegex = /(https?:\/\/[^\s]+)/g; return text.split(urlRegex).map((part, i) => urlRegex.test(part) ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{part}</a> : part); };
 
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl relative max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto">
                         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button>
                         <h2 className="text-2xl font-bold mb-4">{task.title}</h2>
                         <div className="space-y-4">
@@ -378,10 +394,36 @@
                                 <div><label className="block text-sm font-medium text-gray-700">Tipo de Arte</label><p className="text-gray-600 mt-1 p-2 border rounded-md min-h-[42px]">{task.artType || 'Não informado'}</p></div>
                             </div>
                             
-                            {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{attachments.length > 0 ? attachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}><img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/></a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={handleFileUpload} disabled={isUploading} accept="image/png, image/jpeg" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>{isUploading && <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2"><div className="bg-blue-600 h-2.5 rounded-full" style={{width: `${uploadProgress}%`}}></div><p className="text-xs text-center mt-1">{Math.round(uploadProgress)}%</p></div>}</div>{attachments.length > 0 && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
+                            {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{attachments.length > 0 ? attachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}><img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/></a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={handleFileUpload} disabled={isUploading} accept="image/png, image/jpeg, image/gif, .psd, .ai, .eps, .pdf" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>{isUploading && <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2"><div className="bg-blue-600 h-2.5 rounded-full" style={{width: `${uploadProgress}%`}}></div><p className="text-xs text-center mt-1">{Math.round(uploadProgress)}%</p></div>}</div>{attachments.length > 0 && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
                             {task.status === 'Em Aprovação' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes para Aprovação:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{attachments.length > 0 ? attachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}><img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/></a> <div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> {att.status !== 'approved' && att.status !== 'rejected' && (<div className="flex justify-center gap-2"><button onClick={() => handleAttachmentStatusChange(i, 'approved')} className="p-1.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Aprovar"><CheckCircle2 className="w-5 h-5"/></button><button onClick={() => {setOpenAlterationIndex(i); setAlterationNotes(att.alterationNotes || '');}} className="p-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200" title="Solicitar Alteração"><RefreshCw className="w-5 h-5"/></button></div>)} {att.status === 'approved' && <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-4 h-4"/></div>} {att.status === 'rejected' && <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><RefreshCw className="w-4 h-4"/></div>} {openAlterationIndex === i && (<div><textarea value={alterationNotes} onChange={(e) => setAlterationNotes(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-1 text-xs" placeholder="Descreva a alteração..."></textarea><button onClick={() => {handleAttachmentStatusChange(i, 'rejected', alterationNotes); setOpenAlterationIndex(null);}} className="text-xs bg-blue-500 text-white px-2 py-1 mt-1 rounded-md hover:bg-blue-600 w-full">Salvar Alteração</button></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte para aprovação.</p>}</div></div><div className="border-t pt-4 flex flex-col gap-3">{someArtRejected && <button onClick={handleReturnForAdjustment} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg w-full">Devolver para Ajuste</button>}{allArtsApproved && <button onClick={handleFinalizeTask} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Finalizar Tarefa Aprovada</button>}</div></div> )}
                             {task.status === 'Concluído' && ( <div className="border-t pt-4 space-y-4"> <div> <p className="text-sm font-medium text-gray-700">Artes Aprovadas:</p> <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4"> {attachments.length > 0 ? attachments.filter(att => att.status === 'approved').map((att, i) => { const nameWithoutExtension = att.originalName.split('.').slice(0, -1).join('.') || att.name; const extension = att.originalName.split('.').pop() || 'png'; const newFilename = `${nameWithoutExtension}_v${att.version || 1}.${extension}`; return ( <div key={i} className="flex flex-col items-center space-y-2"> <div><img src={att.url} alt={att.name} className="h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500"/></div> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} className="mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200" title="Download"><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
                             
+                            {/* <!-- History Change: New section to display art history --> */}
+                            <div className="border-t pt-4">
+                                <p className="text-sm font-medium text-gray-700">Histórico de Alterações</p>
+                                <div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">
+                                    {task.artHistory && task.artHistory.length > 0 ? (
+                                        task.artHistory
+                                            .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0))
+                                            .map((item, index) => {
+                                                const statusColor = item.status === 'Aprovado' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                                                return (
+                                                    <div key={index} className="text-sm p-2 rounded-md bg-white border border-gray-200">
+                                                        <div className="flex justify-between items-center">
+                                                            <p className="font-semibold">{item.artName} <span className="font-normal text-gray-500">(v{item.version})</span></p>
+                                                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${statusColor}`}>{item.status}</span>
+                                                        </div>
+                                                        {item.notes && <p className="text-xs text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Nota: {item.notes}</p>}
+                                                        <p className="text-xs text-gray-400 text-right mt-1">{formatHistoryDate(item.timestamp)}</p>
+                                                    </div>
+                                                );
+                                            })
+                                    ) : (
+                                        <p className="text-xs text-gray-500">Nenhum histórico de alterações.</p>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Comentários</p><div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">{task.comments && task.comments.length > 0 ? task.comments.map((comment, index) => (<div key={index} className="text-sm"><p><span className="font-semibold">{comment.author}</span><span className="text-xs text-gray-500 ml-2">{new Date(comment.createdAt.seconds * 1000).toLocaleString('pt-BR')}</span></p><p>{comment.text}</p></div>)) : <p className="text-xs text-gray-500">Sem comentários.</p>}</div><div className="mt-2 flex items-center gap-2"><input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Adicionar um comentário..." className="w-full border border-gray-300 rounded-md p-2"/><button onClick={handleAddComment} className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600" title="Enviar Comentário"><Send className="w-5 h-5"/></button></div></div>
                             
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Descrição</p><p className="text-gray-600 mt-1 whitespace-pre-wrap">{task.description || 'Nenhuma.'}</p></div>
@@ -441,7 +483,8 @@
 
             const handleAddTask = async (taskData) => {
                 try {
-                    await db.collection(tasksCollectionPath).add({ ...taskData, status: 'A Fazer', createdAt: firebase.firestore.FieldValue.serverTimestamp(), approvalAttachments: [] });
+                    // <!-- History Change: Initialize tasks with an empty artHistory array -->
+                    await db.collection(tasksCollectionPath).add({ ...taskData, status: 'A Fazer', createdAt: firebase.firestore.FieldValue.serverTimestamp(), approvalAttachments: [], artHistory: [] });
                     closeAllModals();
                 } catch (error) { console.error("Erro ao adicionar tarefa: ", error); }
             };
@@ -472,6 +515,7 @@
                         title: `[CÓPIA] ${originalTask.title}`,
                     };
                     delete duplicatedTaskData.approvalAttachments;
+                    delete duplicatedTaskData.artHistory; // <!-- History Change: Don't copy history -->
                     setTaskToDuplicate(duplicatedTaskData);
                     setIsFormModalOpen(true);
                 }
@@ -506,7 +550,8 @@
 
             return (
                 <div className="bg-gray-100 min-h-screen font-sans text-gray-800">
-                    <header className="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
+                    {/* <!-- Responsiveness Change: Header classes updated for mobile stacking --> */}
+                    <header className="bg-white shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-40">
                         <div className="flex items-center gap-4">
                             {settings.logoUrl && <img src={settings.logoUrl} alt="Logo" className="h-10" />}
                             <div>
@@ -514,26 +559,28 @@
                                 <p className="text-sm text-gray-500">Sistema de Gerenciamento de Artes</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        {/* <!-- Responsiveness Change: Button container allows wrapping --> */}
+                        <div className="flex items-center gap-2 md:gap-4 flex-wrap">
                              <div className="flex items-center bg-gray-200 rounded-lg p-1">
-                                <button onClick={() => setView('board')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'board' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><Columns className="h-5 w-5"/> Quadro</button>
+                                 <button onClick={() => setView('board')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'board' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><Columns className="h-5 w-5"/> Quadro</button>
                                  <button onClick={() => setView('calendar')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'calendar' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><CalendarDays className="h-5 w-5"/> Calendário</button>
                             </div>
                             <button onClick={() => setIsFormModalOpen(true)} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-transform transform hover:scale-105"><Plus className="h-5 w-5" /> Nova Solicitação</button>
-                             {user.email === 'andercleidesigner@gmail.com' && (
+                            {user.email === 'andercleidesigner@gmail.com' && (
                                 <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 rounded-full hover:bg-gray-200" title="Configurações"><Settings className="h-5 w-5"/></button>
-                             )}
-                             <button onClick={() => auth.signOut()} className="flex items-center gap-2 text-red-500 hover:text-red-700 font-semibold"><LogOut className="h-5 w-5"/> Sair</button>
+                            )}
+                            <button onClick={() => auth.signOut()} className="flex items-center gap-2 text-red-500 hover:text-red-700 font-semibold"><LogOut className="h-5 w-5"/> Sair</button>
                         </div>
                     </header>
 
                     {loading ? <div className="flex justify-center items-center h-[calc(100vh-80px)]"><p>A carregar tarefas...</p></div> : (
                         <main className="p-4 md:p-8">
                             {view === 'board' && (
+                                // <!-- Responsiveness Change: Grid is already responsive, which is great! -->
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     {columnNames.map(columnName => (
                                         <div key={columnName} className={`rounded-lg ${columnStyles[columnName]} p-1`}>
-                                           <div className="p-3">
+                                            <div className="p-3">
                                                 <h2 className="font-bold text-lg mb-4 text-gray-700">{columnName} ({tasks.filter(t => t.status === columnName).length})</h2>
                                                 <div className="space-y-4">
                                                     {tasks
@@ -546,7 +593,7 @@
                                                         .map(task => <TaskCard key={task.id} task={task} onDuplicate={handleDuplicateTask} onClick={() => openTaskDetails(task)} />)
                                                     }
                                                 </div>
-                                           </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
