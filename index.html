@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- Firebase SDKs v9 Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         window.firebaseApp = initializeApp;
@@ -36,8 +37,15 @@
             }
             #printable-area {
                 display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 1rem;
+                margin: 0;
                 box-shadow: none !important;
                 border: none !important;
+                background-color: white !important;
             }
             #printable-area, #printable-area * {
                 color: black !important;
@@ -47,7 +55,7 @@
             }
             @page {
                 size: A4;
-                margin: 2cm;
+                margin: 1.5cm;
             }
         }
     </style>
@@ -140,9 +148,10 @@
                     <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
                         <div className="flex flex-col items-center justify-center text-center mb-6">
                             {settings.logoUrl && <img src={settings.logoUrl} alt="Logo da Empresa" className="h-16 mb-4" />}
-                            <h1 className="text-lg font-bold uppercase text-gray-700">Sistema de Gerenciamento de Artes</h1>
+                            <h1 className="text-lg font-bold uppercase text-gray-700">
+                                SISTEMA DE GERENCIAMENTO<br className="sm:hidden" /> DE ARTES
+                            </h1>
                         </div>
-                        <h2 className="text-xl font-bold text-center text-gray-800">Login</h2>
                         <form onSubmit={handleLogin} className="space-y-6">
                             <div>
                                 <label className="text-sm font-bold text-gray-600 block">Email</label>
@@ -1116,7 +1125,7 @@
                             </div>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-                            <div className="flex items-center bg-gray-200 rounded-lg p-1">
+                            <div className="flex items-center bg-gray-200 rounded-lg p-1 flex-wrap">
                                 {isAdmin && <button onClick={() => setView('dashboard')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'dashboard' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><LayoutDashboard className="h-5 w-5"/> Dashboard</button>}
                                 <button onClick={() => setView('board')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'board' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><Columns className="h-5 w-5"/> Quadro</button>
                                 <button onClick={() => setView('calendar')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'calendar' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><CalendarDays className="h-5 w-5"/> Calendário</button>
