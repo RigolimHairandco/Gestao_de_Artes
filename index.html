@@ -15,13 +15,37 @@
         window.firebaseApp = initializeApp;
     </script>
     <script type="module">
-        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, where, query, arrayUnion, arrayRemove, writeBatch, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-        window.firestore = { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, where, query, arrayUnion, arrayRemove, writeBatch, getDoc };
+        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, where, query, arrayUnion, arrayRemove, writeBatch, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        window.firestore = { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, where, query, arrayUnion, arrayRemove, writeBatch, getDoc, orderBy };
     </script>
     <script type="module">
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         window.firebAuth = { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence };
     </script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 1rem;
+                margin: 0;
+            }
+            #printable-area, #printable-area * {
+                color: black !important;
+                background-color: white !important;
+                box-shadow: none !important;
+                border-color: #ccc !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
 
@@ -47,11 +71,16 @@
         const Download = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
         const Settings = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>);
         const Send = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>);
-        
+        const Bold = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>);
+        const Italic = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg>);
+        const List = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>);
+        const ListOrdered = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>);
+        const Bell = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>);
+        const LayoutDashboard = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>);
+        const Printer = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>);
+        const FileText = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>);
+
         // --- Configuração do Firebase ---
-        // ATENÇÃO: Expor chaves de API no lado do cliente é um risco de segurança.
-        // A chave do ImgBB, em particular, pode ser usada por qualquer pessoa para fazer upload de imagens na sua conta.
-        // O ideal é usar o Firebase Storage para uploads e um backend para gerenciar chaves de API de terceiros.
         const firebaseConfig = {
             apiKey: "AIzaSyC3o6GHl2LwAs1vREbXOuaP9BhoOUmjAH8",
             authDomain: "gestao-de-artes---rigolim.firebaseapp.com",
@@ -114,6 +143,38 @@
             );
         };
 
+        const RichTextEditor = ({ value, onChange, placeholder }) => {
+            const editorRef = useRef(null);
+
+            const handleInput = (e) => {
+                onChange(e.target.innerHTML);
+            };
+
+            const handleCommand = (command) => {
+                document.execCommand(command, false, null);
+                editorRef.current.focus();
+            };
+
+            return (
+                <div className="border border-gray-300 rounded-md">
+                    <div className="flex items-center p-2 border-b gap-2 bg-gray-50 rounded-t-md">
+                        <button type="button" onClick={() => handleCommand('bold')} className="p-1.5 hover:bg-gray-200 rounded"><Bold className="w-5 h-5"/></button>
+                        <button type="button" onClick={() => handleCommand('italic')} className="p-1.5 hover:bg-gray-200 rounded"><Italic className="w-5 h-5"/></button>
+                        <button type="button" onClick={() => handleCommand('insertUnorderedList')} className="p-1.5 hover:bg-gray-200 rounded"><List className="w-5 h-5"/></button>
+                        <button type="button" onClick={() => handleCommand('insertOrderedList')} className="p-1.5 hover:bg-gray-200 rounded"><ListOrdered className="w-5 h-5"/></button>
+                    </div>
+                    <div
+                        ref={editorRef}
+                        contentEditable={true}
+                        onInput={handleInput}
+                        dangerouslySetInnerHTML={{ __html: value }}
+                        className="w-full p-2 min-h-[100px] outline-none"
+                        data-placeholder={placeholder}
+                    />
+                </div>
+            );
+        };
+
         const TaskCard = ({ task, onClick, onDuplicate }) => {
             const formatDate = (timestamp) => { 
                 if (!timestamp) return 'Sem data'; 
@@ -128,8 +189,17 @@
                 onDuplicate(task.id);
             };
 
+            const handleDragStart = (e) => {
+                e.dataTransfer.setData("taskId", task.id);
+            };
+
             return (
-                <div onClick={onClick} className="bg-white p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow border-l-4 border-gray-300 relative group">
+                <div 
+                    onClick={onClick} 
+                    draggable="true"
+                    onDragStart={handleDragStart}
+                    className="bg-white p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow border-l-4 border-gray-300 relative group"
+                >
                     <div className="flex justify-between items-start"><h3 className="font-semibold mb-2 pr-2">{task.title}</h3>{task.priority && <span className={`h-3 w-3 rounded-full ${priorityColors[task.priority]} flex-shrink-0 mt-1`} title={`Prioridade ${task.priority}`}></span>}</div>
                     {task.artType && <p className="text-xs text-gray-500 bg-gray-100 inline-block px-2 py-0.5 rounded-full mb-2">{task.artType}</p>}
                     <div className="flex flex-col text-sm text-gray-500 mt-2 space-y-1">
@@ -148,21 +218,116 @@
             const [priority, setPriority] = useState(initialData?.priority || 'Média');
             const [artType, setArtType] = useState(initialData?.artType || '');
             const [attachments, setAttachments] = useState(initialData?.attachments || '');
+            const [uploadedReferenceFiles, setUploadedReferenceFiles] = useState(initialData?.referenceFiles || []);
+            const [isUploading, setIsUploading] = useState(false);
+            const [uploadProgress, setUploadProgress] = useState(0);
+            const [uploadStatus, setUploadStatus] = useState('');
 
-            const handleSubmit = (e) => { 
+            const uploadFileWithProgress = (file, onProgress) => {
+                return new Promise((resolve, reject) => {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', `https://api.imgbb.com/1/upload?key=4d27fe0cc1acd80eabd5fe7118fd1c03`, true);
+                    xhr.upload.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            const percentComplete = Math.round((event.loaded / event.total) * 100);
+                            onProgress(percentComplete);
+                        }
+                    };
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            const result = JSON.parse(xhr.responseText);
+                            if (result.success) {
+                                resolve({ url: result.data.url, originalName: file.name });
+                            } else {
+                                reject(new Error(result.error.message));
+                            }
+                        } else {
+                            reject(new Error(`HTTP Error: ${xhr.statusText}`));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error("Erro de rede durante o upload."));
+                    xhr.send(formData);
+                });
+            };
+
+            const handleFileSelectAndUpload = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                setIsUploading(true);
+                const totalFiles = files.length;
+                const newUploadedFiles = [];
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    setUploadStatus(`Enviando arquivo ${i + 1} de ${totalFiles}...`);
+                    try {
+                        const uploadedFile = await uploadFileWithProgress(file, (progress) => {
+                            setUploadProgress(progress);
+                        });
+                        newUploadedFiles.push(uploadedFile);
+                    } catch (error) {
+                        console.error(`Falha no upload do arquivo: ${file.name}`, error);
+                        alert(`Ocorreu um erro ao enviar o arquivo: ${file.name}. Por favor, tente novamente.`);
+                        setIsUploading(false);
+                        setUploadStatus('');
+                        return;
+                    }
+                }
+                
+                setUploadedReferenceFiles(prevFiles => [...prevFiles, ...newUploadedFiles]);
+                setIsUploading(false);
+                setUploadStatus('');
+                e.target.value = null;
+            };
+            
+            const handleRemoveReferenceFile = (indexToRemove) => {
+                setUploadedReferenceFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
+            };
+
+            const handleSubmit = async (e) => { 
                 e.preventDefault(); 
-                if (!title.trim()) return; 
-                onSave({ 
+                if (!title.trim() || isUploading) return; 
+
+                await onSave({ 
                     title: title.toUpperCase(), 
-                    description: description.toUpperCase(), 
+                    description: description,
                     requester: user.email.split('@')[0],
                     dueDate: dueDate ? new Date(dueDate) : null, 
                     priority, 
                     artType: artType.toUpperCase(),
-                    attachments 
-                }); 
+                    attachments,
+                    referenceFiles: uploadedReferenceFiles 
+                });
             };
-            return (<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"><div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto"><h2 className="text-2xl font-bold mb-4">{initialData ? "Duplicar Solicitação" : "Nova Solicitação de Arte"}</h2><button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Título</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Arte para post do Instagram" required /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Data de Entrega</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label><select value={priority} onChange={e => setPriority(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"><option>Baixa</option><option>Média</option><option>Alta</option></select></div></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Arte</label><input type="text" value={artType} onChange={e => setArtType(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Post para Feed, Story"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows="4" className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Descreva os detalhes..."></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Anexos de Referência (links)</label><textarea value={attachments} onChange={e => setAttachments(e.target.value)} rows="3" className="w-full border border-gray-300 rounded-md p-2" placeholder="https://drive.google.com/..."></textarea></div><div className="flex justify-end gap-3 pt-4"><button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button><button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Salvar</button></div></form></div></div>);
+
+            return (<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"><div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto"><h2 className="text-2xl font-bold mb-4">{initialData ? "Duplicar Solicitação" : "Nova Solicitação de Arte"}</h2><button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Título</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Arte para post do Instagram" required /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Data de Entrega</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label><select value={priority} onChange={e => setPriority(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"><option>Baixa</option><option>Média</option><option>Alta</option></select></div></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Arte</label><input type="text" value={artType} onChange={e => setArtType(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Post para Feed, Story"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label><RichTextEditor value={description} onChange={setDescription} placeholder="Descreva os detalhes..." /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Links de Referência</label><textarea value={attachments} onChange={e => setAttachments(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-2" placeholder="https://drive.google.com/..."></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Arquivos de Referência</label><input type="file" multiple onChange={handleFileSelectAndUpload} disabled={isUploading} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"/></div>
+            {isUploading && (
+                <div className="mt-2">
+                    <p className="text-sm text-center mb-1">{uploadStatus}</p>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                    </div>
+                    <p className="text-center text-sm mt-1">{`${Math.round(uploadProgress)}%`}</p>
+                </div>
+            )}
+            {uploadedReferenceFiles.length > 0 && (
+                <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700">Arquivos anexados:</p>
+                    <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {uploadedReferenceFiles.map((file, index) => (
+                            <div key={index} className="relative group flex flex-col items-center space-y-1">
+                                <img src={file.url} alt={file.originalName} className="h-20 w-20 object-cover rounded-md shadow-md"/>
+                                <button type="button" onClick={() => handleRemoveReferenceFile(index)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity" title="Remover arquivo"><X className="w-4 h-4"/></button>
+                                <p className="text-xs text-center font-semibold" title={file.originalName}>Ref. {String(index + 1).padStart(2, '0')}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            <div className="flex justify-end gap-3 pt-4"><button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button><button type="submit" disabled={isUploading} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50">{isUploading ? 'Aguarde o upload...' : 'Salvar'}</button></div></form></div></div>);
         };
         
         const ConfirmationModal = ({ message, onConfirm, onCancel }) => (<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"><div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm"><h3 className="text-lg font-medium text-gray-900 mb-4">{message}</h3><div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button><button type="button" onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Excluir</button></div></div></div>);
@@ -233,13 +398,14 @@
             );
         };
         
-        const TaskDetailModal = ({ user, task: initialTask, onClose, onUpdate, onDelete }) => {
+        const TaskDetailModal = ({ user, task: initialTask, onClose, onUpdate, onDelete, createNotification }) => {
             if (!initialTask) return null;
 
             const [task, setTask] = useState(initialTask);
             const [openAlterationIndex, setOpenAlterationIndex] = useState(null);
             const [alterationNotes, setAlterationNotes] = useState('');
             const [isUploading, setIsUploading] = useState(false);
+            const [uploadProgress, setUploadProgress] = useState(0);
             const [attachmentToDelete, setAttachmentToDelete] = useState(null);
             const [newComment, setNewComment] = useState('');
             
@@ -258,74 +424,101 @@
                 return () => unsubscribe();
             }, [initialTask.id]);
             
-            const handleFileUpload = async (e, attachmentToReplace = null) => {
+            const handleFileUpload = (e, attachmentToReplace = null) => {
                 const file = e.target.files[0];
                 if (!file) return;
+
                 setIsUploading(true);
-                
+                setUploadProgress(0);
+
                 const formData = new FormData();
                 formData.append('image', file);
 
-                try {
-                    const response = await fetch(`https://api.imgbb.com/1/upload?key=4d27fe0cc1acd80eabd5fe7118fd1c03`, {
-                        method: 'POST',
-                        body: formData,
-                    });
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.error.message);
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `https://api.imgbb.com/1/upload?key=4d27fe0cc1acd80eabd5fe7118fd1c03`, true);
 
-                    const taskDocRef = doc(db, "tasks", task.id);
-                    const now = new Date(); // FIX: Use client-side date
-                    
-                    if (attachmentToReplace) {
-                        // Substituir um anexo existente (arte rejeitada)
-                        const newVersion = (attachmentToReplace.version || 1) + 1;
-                        const newAttachments = task.approvalAttachments.map(att => 
-                            att.url === attachmentToReplace.url 
-                            ? { ...att, url: result.data.url, originalName: file.name, version: newVersion, status: 'pending', alterationNotes: '' } 
-                            : att
-                        );
-                        
-                        await updateDoc(taskDocRef, {
-                            approvalAttachments: newAttachments,
-                            artHistory: arrayUnion({
-                                artName: attachmentToReplace.name,
-                                version: newVersion,
-                                status: 'Reenviado para ajuste',
-                                timestamp: now // FIX: Use client-side date
-                            })
-                        });
-                    } else {
-                        // Adicionar um novo anexo
-                        const newAttachment = {
-                            name: `Arte ${task.approvalAttachments.length + 1}`,
-                            originalName: file.name,
-                            url: result.data.url,
-                            status: 'pending', // pending, approved, rejected
-                            version: 1,
-                            uploadedAt: now // FIX: Use client-side date
-                        };
-                        await updateDoc(taskDocRef, {
-                            approvalAttachments: arrayUnion(newAttachment)
-                        });
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        setUploadProgress(percentComplete);
                     }
-                } catch (error) {
-                    console.error("Erro no upload do arquivo:", error);
-                } finally {
+                };
+
+                xhr.onload = async () => {
+                    if (xhr.status === 200) {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            const taskDocRef = doc(db, "tasks", task.id);
+                            const now = new Date();
+
+                            if (attachmentToReplace) {
+                                const newVersion = (attachmentToReplace.version || 1) + 1;
+                                const newAttachments = task.approvalAttachments.map(att =>
+                                    att.url === attachmentToReplace.url
+                                    ? { ...att, url: result.data.url, originalName: file.name, version: newVersion, status: 'pending', alterationNotes: '' }
+                                    : att
+                                );
+                                await updateDoc(taskDocRef, {
+                                    approvalAttachments: newAttachments,
+                                    artHistory: arrayUnion({
+                                        artName: attachmentToReplace.name,
+                                        version: newVersion,
+                                        status: 'Reenviado para ajuste',
+                                        timestamp: now
+                                    })
+                                });
+                            } else {
+                                const newAttachment = {
+                                    name: `Arte ${task.approvalAttachments.length + 1}`,
+                                    originalName: file.name,
+                                    url: result.data.url,
+                                    status: 'pending',
+                                    version: 1,
+                                    uploadedAt: now
+                                };
+                                await updateDoc(taskDocRef, {
+                                    approvalAttachments: arrayUnion(newAttachment)
+                                });
+                            }
+                        } else {
+                             console.error("Erro no upload do arquivo (API):", result.error.message);
+                        }
+                    } else {
+                        console.error("Erro no upload do arquivo (HTTP):", xhr.statusText);
+                    }
+                    
+                    setTimeout(() => {
+                        setIsUploading(false);
+                        setUploadProgress(0);
+                    }, 500);
+                };
+
+                xhr.onerror = () => {
+                    console.error("Erro de rede durante o upload.");
                     setIsUploading(false);
-                }
+                    setUploadProgress(0);
+                };
+
+                xhr.send(formData);
             };
             
             const handleAddComment = async () => {
                 if (!newComment.trim()) return;
                 const taskDocRef = doc(db, "tasks", task.id);
+                const currentUser = user.email.split('@')[0];
                 await updateDoc(taskDocRef, {
                     comments: arrayUnion({
                         text: newComment,
-                        author: user.email.split('@')[0],
+                        author: currentUser,
                         createdAt: new Date()
                     })
                 });
+                
+                // Notificar o solicitante se o comentário não for dele
+                if (task.requester !== currentUser) {
+                    createNotification(task.requester, `${currentUser} comentou na tarefa: "${task.title}"`, task.id);
+                }
+                
                 setNewComment('');
             };
 
@@ -352,9 +545,15 @@
                         version: attachment.version,
                         status: newStatus === 'approved' ? 'Aprovado' : 'Alteração Solicitada',
                         notes: notes,
-                        timestamp: new Date() // FIX: Use client-side date
+                        timestamp: new Date()
                     })
                 });
+                
+                const message = newStatus === 'approved' 
+                    ? `A arte "${attachment.name}" foi aprovada na tarefa "${task.title}"`
+                    : `Foi solicitada uma alteração na arte "${attachment.name}" da tarefa "${task.title}"`;
+                createNotification(task.requester, message, task.id);
+
                 setOpenAlterationIndex(null);
             };
 
@@ -362,7 +561,7 @@
                 await onUpdate(task.id, { status: 'Em Andamento' });
             };
             
-            const handleSendForApproval = async () => { await onUpdate(task.id, {status: 'Em Aprovação', approvalStarted: true }); onClose(); };
+            const handleSendForApproval = async () => { await onUpdate(task.id, {status: 'Em Aprovação'}); onClose(); };
             const handleFinalizeTask = async () => { await onUpdate(task.id, {status: 'Concluído'}); onClose(); };
             
             const handleDownload = async (url, filename) => {
@@ -388,7 +587,7 @@
             const formatDate = (ts) => { if (!ts) return 'Sem data'; const date = new Date(ts.seconds * 1000); const userTimezoneOffset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR'); };
             const formatHistoryDate = (ts) => ts ? new Date(ts.seconds * 1000).toLocaleString('pt-BR') : '';
             const priorityColors = { 'Alta': 'text-red-600', 'Média': 'text-yellow-600', 'Baixa': 'text-green-600' };
-            const renderAttachments = (text) => { if (!text) return 'Nenhum anexo fornecido.'; const urlRegex = /(https?:\/\/[^\s]+)/g; return text.split(urlRegex).map((part, i) => urlRegex.test(part) ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{part}</a> : part); };
+            const renderAttachments = (text) => { if (!text) return null; const urlRegex = /(https?:\/\/[^\s]+)/g; return text.split(urlRegex).map((part, i) => urlRegex.test(part) ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{part}</a> : part); };
 
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
@@ -396,7 +595,6 @@
                         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button>
                         <h2 className="text-2xl font-bold mb-4">{task.title}</h2>
                         
-                        {/* ... (O restante do JSX do modal permanece o mesmo, pois já era bem estruturado) ... */}
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div><label className="block text-sm font-medium text-gray-700">Status</label><select value={task.status} onChange={(e) => onUpdate(task.id, {status: e.target.value})} className="w-full border border-gray-300 rounded-md p-2 mt-1"><option>A Fazer</option><option>Em Andamento</option><option>Em Aprovação</option><option>Concluído</option></select></div>
@@ -404,16 +602,58 @@
                                 <div><label className="block text-sm font-medium text-gray-700">Tipo de Arte</label><p className="text-gray-600 mt-1 p-2 border rounded-md min-h-[42px]">{task.artType || 'Não informado'}</p></div>
                             </div>
                             
-                            {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{attachments.length > 0 ? attachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}><img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/></a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={handleFileUpload} disabled={isUploading} accept="image/png, image/jpeg, image/gif, .psd, .ai, .eps, .pdf" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/></div>{attachments.length > 0 && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
+                            {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{attachments.length > 0 ? attachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}><img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/></a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={(e) => handleFileUpload(e)} disabled={isUploading} accept="image/png, image/jpeg, image/gif, .psd, .ai, .eps, .pdf" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>
+                            {isUploading && (
+                                <div className="mt-2">
+                                    <p className="text-sm text-center mb-1">A carregar...</p>
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                                    </div>
+                                    <p className="text-center text-sm mt-1">{`${Math.round(uploadProgress)}%`}</p>
+                                </div>
+                            )}
+                            </div>{attachments.length > 0 && !isUploading && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
                             {task.status === 'Em Aprovação' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes para Aprovação:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{attachments.length > 0 ? attachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}><img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/></a> <div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> {att.status !== 'approved' && att.status !== 'rejected' && (<div className="flex justify-center gap-2"><button onClick={() => handleAttachmentStatusChange(i, 'approved')} className="p-1.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Aprovar"><CheckCircle2 className="w-5 h-5"/></button><button onClick={() => {setOpenAlterationIndex(i); setAlterationNotes(att.alterationNotes || '');}} className="p-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200" title="Solicitar Alteração"><RefreshCw className="w-5 h-5"/></button></div>)} {att.status === 'approved' && <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-4 h-4"/></div>} {att.status === 'rejected' && <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><RefreshCw className="w-4 h-4"/></div>} {openAlterationIndex === i && (<div><textarea value={alterationNotes} onChange={(e) => setAlterationNotes(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-1 text-xs" placeholder="Descreva a alteração..."></textarea><button onClick={() => {handleAttachmentStatusChange(i, 'rejected', alterationNotes); setOpenAlterationIndex(null);}} className="text-xs bg-blue-500 text-white px-2 py-1 mt-1 rounded-md hover:bg-blue-600 w-full">Salvar Alteração</button></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte para aprovação.</p>}</div></div><div className="border-t pt-4 flex flex-col gap-3">{someArtRejected && <button onClick={handleReturnForAdjustment} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg w-full">Devolver para Ajuste</button>}{allArtsApproved && <button onClick={handleFinalizeTask} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Finalizar Tarefa Aprovada</button>}</div></div> )}
                             {task.status === 'Concluído' && ( <div className="border-t pt-4 space-y-4"> <div> <p className="text-sm font-medium text-gray-700">Artes Aprovadas:</p> <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4"> {attachments.length > 0 ? attachments.filter(att => att.status === 'approved').map((att, i) => { const nameWithoutExtension = att.originalName.split('.').slice(0, -1).join('.') || att.name; const extension = att.originalName.split('.').pop() || 'png'; const newFilename = `${nameWithoutExtension}_v${att.version || 1}.${extension}`; return ( <div key={i} className="flex flex-col items-center space-y-2"> <div><img src={att.url} alt={att.name} className="h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500"/></div> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} className="mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200" title="Download"><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
                             
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Histórico de Alterações</p><div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">{task.artHistory && task.artHistory.length > 0 ? (task.artHistory.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)).map((item, index) => {const statusColor = item.status === 'Aprovado' ? 'bg-green-100 text-green-800' : item.status === 'Alteração Solicitada' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'; return (<div key={index} className="text-sm p-2 rounded-md bg-white border border-gray-200"><div className="flex justify-between items-center"><p className="font-semibold">{item.artName} <span className="font-normal text-gray-500">(v{item.version})</span></p><span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${statusColor}`}>{item.status}</span></div>{item.notes && <p className="text-xs text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Nota: {item.notes}</p>}<p className="text-xs text-gray-400 text-right mt-1">{formatHistoryDate(item.timestamp)}</p></div>); })) : (<p className="text-xs text-gray-500">Nenhum histórico de alterações.</p>)}</div></div>
-                            <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Comentários</p><div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">{task.comments && task.comments.length > 0 ? [...task.comments].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map((comment, index) => (<div key={index} className="text-sm bg-white p-2 rounded border"><p><span className="font-semibold">{comment.author}</span><span className="text-xs text-gray-500 ml-2">{new Date(comment.createdAt.seconds * 1000).toLocaleString('pt-BR')}</span></p><p className="mt-1">{comment.text}</p></div>)) : <p className="text-xs text-gray-500">Sem comentários.</p>}</div><div className="mt-2 flex items-center gap-2"><input type="text" value={newComment} onKeyPress={(e) => e.key === 'Enter' && handleAddComment()} onChange={(e) => setNewComment(e.target.value)} placeholder="Adicionar um comentário..." className="w-full border border-gray-300 rounded-md p-2"/><button onClick={handleAddComment} className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600" title="Enviar Comentário"><Send className="h-5 w-5"/></button></div></div>
+                            <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Comentários</p><div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">{task.comments && task.comments.length > 0 ? [...task.comments].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map((comment, index) => (<div key={index} className="text-sm bg-white p-2 rounded border"><p><span className="font-semibold">{comment.author}</span><span className="text-xs text-gray-500 ml-2">{new Date(comment.createdAt.seconds * 1000).toLocaleString('pt-BR')}</span></p><div className="mt-1 prose prose-sm" dangerouslySetInnerHTML={{ __html: comment.text }} /></div>)) : <p className="text-xs text-gray-500">Sem comentários.</p>}</div><div className="mt-2"><RichTextEditor value={newComment} onChange={setNewComment} placeholder="Adicionar um comentário..." /><button onClick={handleAddComment} className="mt-2 w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" title="Enviar Comentário"><Send className="h-5 w-5"/> Enviar</button></div></div>
                             
-                            <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Descrição</p><p className="text-gray-600 mt-1 whitespace-pre-wrap">{task.description || 'Nenhuma.'}</p></div>
-                            <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Anexos de Referência</p><div className="text-gray-600 mt-1 whitespace-pre-wrap">{renderAttachments(task.attachments)}</div></div>
-                            <div className="grid grid-cols-2 gap-4 border-t pt-4"><div><p className="text-sm font-medium text-gray-700">Solicitante</p><p className="text-gray-600 mt-1">{task.requester || 'Não informado'}</p></div><div><p className="text-sm font-medium text-gray-700">Data de Entrega</p><p className="text-gray-600 mt-1">{formatDate(task.dueDate)}</p></div></div>
+                            <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Descrição</p><div className="text-gray-600 mt-1 whitespace-pre-wrap prose prose-sm" dangerouslySetInnerHTML={{ __html: task.description || 'Nenhuma.' }} /></div>
+                            
+                            {task.attachments && <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Links de Referência</p><div className="text-gray-600 mt-1 whitespace-pre-wrap">{renderAttachments(task.attachments)}</div></div>}
+                            
+                            {task.referenceFiles && task.referenceFiles.length > 0 && (
+                                <div className="border-t pt-4">
+                                    <p className="text-sm font-medium text-gray-700">Arquivos de Referência</p>
+                                    <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {task.referenceFiles.map((file, index) => (
+                                            <div key={index} className="flex flex-col items-center space-y-2">
+                                                <a href={file.url} target="_blank" rel="noopener noreferrer" title={file.originalName}>
+                                                    <img src={file.url} alt={`Referência ${index + 1}`} className="h-28 w-28 object-cover rounded-md shadow-md"/>
+                                                </a>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-semibold">Ref. {String(index + 1).padStart(2, '0')}</p>
+                                                    <button onClick={() => handleDownload(file.url, file.originalName)} className="mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200" title="Download">
+                                                        <Download className="w-5 h-5"/>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Solicitante</p>
+                                    <p className="text-gray-600 mt-1">{task.requester || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Data de Entrega</p>
+                                    <p className="text-gray-600 mt-1">{formatDate(task.dueDate)}</p>
+                                </div>
+                            </div>
                         </div>
                         <div className="flex justify-between items-center mt-6 pt-4 border-t">
                             <button onClick={() => onDelete(task.id)} className="flex items-center gap-2 text-red-500 hover:text-red-700 font-semibold"><Trash2 className="h-5 w-5"/> Excluir</button>
@@ -478,6 +718,201 @@
                 </div>
             );
         };
+        
+        const NotificationsPanel = ({ notifications, onNotificationClick, onClose }) => {
+            const formatTimeAgo = (timestamp) => {
+                if (!timestamp) return '';
+                const date = new Date(timestamp.seconds * 1000);
+                const now = new Date();
+                const seconds = Math.floor((now - date) / 1000);
+                let interval = seconds / 31536000;
+                if (interval > 1) return Math.floor(interval) + " anos atrás";
+                interval = seconds / 2592000;
+                if (interval > 1) return Math.floor(interval) + " meses atrás";
+                interval = seconds / 86400;
+                if (interval > 1) return Math.floor(interval) + " dias atrás";
+                interval = seconds / 3600;
+                if (interval > 1) return Math.floor(interval) + " horas atrás";
+                interval = seconds / 60;
+                if (interval > 1) return Math.floor(interval) + " minutos atrás";
+                return "Agora mesmo";
+            };
+
+            return (
+                <div className="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out">
+                    <div className="flex justify-between items-center p-4 border-b">
+                        <h2 className="text-lg font-bold">Notificações</h2>
+                        <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200"><X className="w-6 h-6"/></button>
+                    </div>
+                    <div className="overflow-y-auto h-[calc(100%-65px)]">
+                        {notifications.length === 0 ? (
+                            <p className="text-center text-gray-500 p-8">Nenhuma notificação nova.</p>
+                        ) : (
+                            notifications.map(notif => (
+                                <div key={notif.id} onClick={() => onNotificationClick(notif)} className={`p-4 border-b cursor-pointer hover:bg-gray-100 ${!notif.isRead ? 'bg-blue-50' : ''}`}>
+                                    <p className="text-sm">{notif.message}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(notif.createdAt)}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardView = ({ tasks }) => {
+            const totalTasks = tasks.length;
+            const tasksByStatus = tasks.reduce((acc, task) => {
+                acc[task.status] = (acc[task.status] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const today = new Date();
+            const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+            const completedThisWeek = tasks.filter(task => task.status === 'Concluído' && task.completedAt && task.completedAt.toDate() > oneWeekAgo).length;
+            const overdueTasks = tasks.filter(task => task.status !== 'Concluído' && task.dueDate && task.dueDate.toDate() < today).length;
+
+            const statusColors = {
+                'A Fazer': 'bg-blue-500',
+                'Em Andamento': 'bg-yellow-500',
+                'Em Aprovação': 'bg-purple-500',
+                'Concluído': 'bg-green-500',
+            };
+
+            return (
+                <div className="p-4 space-y-8">
+                    <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                            <span className="text-5xl font-bold text-blue-600">{totalTasks}</span>
+                            <span className="text-lg text-gray-600 mt-2">Total de Tarefas</span>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                            <span className="text-5xl font-bold text-yellow-600">{tasksByStatus['Em Andamento'] || 0}</span>
+                            <span className="text-lg text-gray-600 mt-2">Em Andamento</span>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                            <span className="text-5xl font-bold text-green-600">{completedThisWeek}</span>
+                            <span className="text-lg text-gray-600 mt-2">Concluídas na Semana</span>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                            <span className="text-5xl font-bold text-red-600">{overdueTasks}</span>
+                            <span className="text-lg text-gray-600 mt-2">Atrasadas</span>
+                        </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h2 className="text-xl font-bold text-gray-700 mb-4">Distribuição de Tarefas por Status</h2>
+                        <div className="space-y-4">
+                            {Object.entries(tasksByStatus).map(([status, count]) => (
+                                <div key={status}>
+                                    <div className="flex justify-between mb-1">
+                                        <span className="text-base font-medium text-gray-700">{status}</span>
+                                        <span className="text-sm font-medium text-gray-700">{count} {count === 1 ? 'tarefa' : 'tarefas'}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-4">
+                                        <div 
+                                            className={`${statusColors[status] || 'bg-gray-500'} h-4 rounded-full`} 
+                                            style={{ width: `${(count / totalTasks) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ReportView = ({ tasks }) => {
+            const [startDate, setStartDate] = useState('');
+            const [endDate, setEndDate] = useState('');
+            const [filteredTasks, setFilteredTasks] = useState(null);
+
+            const handleGenerateReport = () => {
+                const start = startDate ? new Date(startDate) : null;
+                const end = endDate ? new Date(endDate) : null;
+                
+                if(start) start.setHours(0, 0, 0, 0);
+                if(end) end.setHours(23, 59, 59, 999);
+
+                const filtered = tasks.filter(task => {
+                    const taskDate = task.createdAt?.toDate();
+                    const completedDate = task.completedAt?.toDate();
+
+                    if (task.status === 'Concluído') {
+                        if (!completedDate) return false;
+                        if (start && end) return completedDate >= start && completedDate <= end;
+                        if (start) return completedDate >= start;
+                        if (end) return completedDate <= end;
+                    } else {
+                        if (!taskDate) return false;
+                        if (start && end) return taskDate >= start && taskDate <= end;
+                        if (start) return taskDate >= start;
+                        if (end) return taskDate <= end;
+                    }
+                    return true;
+                });
+                setFilteredTasks(filtered);
+            };
+
+            const handlePrint = () => {
+                window.print();
+            };
+            
+            const formatDate = (ts) => ts ? ts.toDate().toLocaleDateString('pt-BR') : 'N/A';
+
+            const tasksToDo = filteredTasks ? filteredTasks.filter(t => t.status === 'A Fazer') : [];
+            const tasksInApproval = filteredTasks ? filteredTasks.filter(t => t.status === 'Em Aprovação') : [];
+            const tasksCompleted = filteredTasks ? filteredTasks.filter(t => t.status === 'Concluído') : [];
+
+            return (
+                <div className="p-4 space-y-6">
+                    <div className="no-print bg-white p-4 rounded-lg shadow-md">
+                        <h1 className="text-2xl font-bold text-gray-800 mb-4">Gerar Relatório de Tarefas</h1>
+                        <div className="flex flex-wrap gap-4 items-end">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Data de Início</label>
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md p-2"/>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Data de Fim</label>
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md p-2"/>
+                            </div>
+                            <button onClick={handleGenerateReport} className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <FileText className="h-5 w-5"/> Gerar Relatório
+                            </button>
+                            {filteredTasks && (
+                                <button onClick={handlePrint} className="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 flex items-center gap-2">
+                                    <Printer className="h-5 w-5"/> Imprimir
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {filteredTasks && (
+                        <div id="printable-area" className="bg-white p-6 rounded-lg shadow-md">
+                            <h2 className="text-xl font-bold text-center mb-2">Relatório de Tarefas</h2>
+                            <p className="text-center text-sm text-gray-600 mb-6">Período de {startDate ? new Date(startDate).toLocaleDateString('pt-BR') : 'Início'} até {endDate ? new Date(endDate).toLocaleDateString('pt-BR') : 'Fim'}</p>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold border-b-2 border-gray-300 pb-2 mb-3">A Fazer ({tasksToDo.length})</h3>
+                                    {tasksToDo.length > 0 ? tasksToDo.map(task => <p key={task.id} className="text-sm py-1 border-b border-gray-100">{task.title} - <span className="text-gray-500">Solicitante: {task.requester}</span></p>) : <p className="text-sm text-gray-500">Nenhuma tarefa.</p>}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold border-b-2 border-gray-300 pb-2 mb-3">Em Aprovação ({tasksInApproval.length})</h3>
+                                    {tasksInApproval.length > 0 ? tasksInApproval.map(task => <p key={task.id} className="text-sm py-1 border-b border-gray-100">{task.title} - <span className="text-gray-500">Solicitante: {task.requester}</span></p>) : <p className="text-sm text-gray-500">Nenhuma tarefa.</p>}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold border-b-2 border-gray-300 pb-2 mb-3">Concluídas no Período ({tasksCompleted.length})</h3>
+                                    {tasksCompleted.length > 0 ? tasksCompleted.map(task => <p key={task.id} className="text-sm py-1 border-b border-gray-100">{task.title} - <span className="text-gray-500">Concluída em: {formatDate(task.completedAt)}</span></p>) : <p className="text-sm text-gray-500">Nenhuma tarefa.</p>}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
 
         const TaskManager = ({ user }) => {
             const [tasks, setTasks] = useState([]);
@@ -490,25 +925,25 @@
             const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
             const [taskToDelete, setTaskToDelete] = useState(null);
             const [settings, setSettings] = useState({ companyName: "Sua Empresa", logoUrl: "" });
+            const [draggedOverColumn, setDraggedOverColumn] = useState(null);
+            const [notifications, setNotifications] = useState([]);
+            const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
             
-            const { collection, query, where, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } = window.firestore;
+            const { collection, query, where, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, orderBy } = window.firestore;
+            const currentUser = user.email.split('@')[0];
+            const adminUsers = [
+                'andercleidesigner@gmail.com',
+                'marketingrigolim@gmail.com',
+                'ceo@rigolim.com.br',
+                'magnofrancofotografia@gmail.com'
+            ];
+            const isAdmin = adminUsers.includes(user.email);
 
             useEffect(() => {
-                const adminUsers = [
-                    'marketingrigolim@gmail.com',
-                    'ceo@rigolim.com.br',
-                    'andercleidesigner@gmail.com',
-                    'magnofrancofotografia@gmail.com'
-                ];
+                let tasksQuery = isAdmin ? query(collection(db, "tasks")) : query(collection(db, "tasks"), where("requester", "==", currentUser));
 
-                let tasksQuery = query(collection(db, "tasks"));
-
-                if (!adminUsers.includes(user.email)) {
-                    tasksQuery = query(collection(db, "tasks"), where("requester", "==", user.email.split('@')[0]));
-                }
-
-                const unsubscribeTasks = onSnapshot(tasksQuery, (querySnapshot) => {
-                    const tasksData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const unsubscribeTasks = onSnapshot(tasksQuery, (tasksSnapshot) => {
+                    const tasksData = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setTasks(tasksData);
                     setLoading(false);
                 }, (error) => { console.error("Erro ao buscar tarefas: ", error); setLoading(false); });
@@ -519,14 +954,36 @@
                         setSettings(doc.data());
                     }
                 });
+                
+                const notificationsQuery = query(collection(db, "notifications"), where("userId", "==", currentUser));
+                const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+                    const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    notifs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                    setNotifications(notifs);
+                });
 
-                return () => { unsubscribeTasks(); unsubscribeSettings(); };
+                return () => { 
+                    unsubscribeTasks(); 
+                    unsubscribeSettings();
+                    unsubscribeNotifications();
+                };
             }, [user.email]);
+
+            const createNotification = async (recipient, message, taskId) => {
+                if (recipient === currentUser) return;
+                await addDoc(collection(db, "notifications"), {
+                    userId: recipient,
+                    message: message,
+                    taskId: taskId,
+                    isRead: false,
+                    createdAt: serverTimestamp()
+                });
+            };
 
             const handleAddTask = async (taskData) => {
                 try {
                     await addDoc(collection(db, "tasks"), { 
-                        ...taskData, 
+                        ...taskData,
                         status: 'A Fazer', 
                         createdAt: serverTimestamp(), 
                         approvalAttachments: [], 
@@ -534,13 +991,27 @@
                         comments: []
                     });
                     closeAllModals();
-                } catch (error) { console.error("Erro ao adicionar tarefa: ", error); }
+                } catch (error) { 
+                    console.error("Erro ao adicionar tarefa: ", error);
+                    throw error;
+                }
             };
 
             const handleUpdateTask = async (taskId, updatedData) => {
                 const taskDocRef = doc(db, "tasks", taskId);
+                const originalTask = tasks.find(t => t.id === taskId);
+                
+                const dataToUpdate = { ...updatedData };
+                if (updatedData.status === 'Concluído' && originalTask.status !== 'Concluído') {
+                    dataToUpdate.completedAt = serverTimestamp();
+                }
+
                 try { 
-                    await updateDoc(taskDocRef, updatedData); 
+                    await updateDoc(taskDocRef, dataToUpdate); 
+                    if (updatedData.status && originalTask && originalTask.status !== updatedData.status) {
+                        const message = `O status da tarefa "${originalTask.title}" foi alterado para "${updatedData.status}"`;
+                        createNotification(originalTask.requester, message, taskId);
+                    }
                 } catch (error) { 
                     console.error("Erro ao atualizar tarefa: ", error); 
                 }
@@ -559,10 +1030,10 @@
             const handleDuplicateTask = (taskId) => {
                 const originalTask = tasks.find(t => t.id === taskId);
                 if(originalTask){
-                    const { id, createdAt, status, approvalAttachments, artHistory, comments, ...restOfTask } = originalTask;
+                    const { id, createdAt, status, approvalAttachments, artHistory, comments, referenceFiles, ...restOfTask } = originalTask;
                     const duplicatedTaskData = {
                         ...restOfTask,
-                        requester: user.email.split('@')[0],
+                        requester: currentUser,
                         title: `[CÓPIA] ${originalTask.title}`,
                     };
                     setTaskToDuplicate(duplicatedTaskData);
@@ -588,8 +1059,27 @@
                 setIsSettingsModalOpen(false);
             };
 
+            const handleDrop = (e, newStatus) => {
+                e.preventDefault();
+                const taskId = e.dataTransfer.getData("taskId");
+                handleUpdateTask(taskId, { status: newStatus });
+                setDraggedOverColumn(null);
+            };
+
+            const handleNotificationClick = async (notification) => {
+                const taskToOpen = tasks.find(t => t.id === notification.taskId);
+                if (taskToOpen) {
+                    openTaskDetails(taskToOpen);
+                }
+                if (!notification.isRead) {
+                    const notifDocRef = doc(db, "notifications", notification.id);
+                    await updateDoc(notifDocRef, { isRead: true });
+                }
+                setIsNotificationsOpen(false);
+            };
+
+            const unreadCount = notifications.filter(n => !n.isRead).length;
             const columnNames = ['A Fazer', 'Em Andamento', 'Em Aprovação', 'Concluído'];
-            
             const columnStyles = {
                 'A Fazer': 'bg-blue-100 border-blue-400',
                 'Em Andamento': 'bg-yellow-100 border-yellow-400',
@@ -599,7 +1089,7 @@
 
             return (
                 <div className="bg-gray-100 min-h-screen font-sans text-gray-800">
-                    <header className="bg-white shadow-md p-2 md:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sticky top-0 z-40">
+                    <header className="bg-white shadow-md p-2 md:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sticky top-0 z-40 no-print">
                         <div className="flex items-center gap-4">
                             {settings.logoUrl && <img src={settings.logoUrl} alt="Logo" className="h-10" />}
                             <div>
@@ -609,11 +1099,21 @@
                         </div>
                         <div className="flex items-center gap-2 flex-wrap justify-start">
                             <div className="flex items-center bg-gray-200 rounded-lg p-1">
+                                {isAdmin && <button onClick={() => setView('dashboard')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'dashboard' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><LayoutDashboard className="h-5 w-5"/> Dashboard</button>}
                                 <button onClick={() => setView('board')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'board' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><Columns className="h-5 w-5"/> Quadro</button>
                                 <button onClick={() => setView('calendar')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'calendar' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><CalendarDays className="h-5 w-5"/> Calendário</button>
+                                {isAdmin && <button onClick={() => setView('report')} className={`flex items-center gap-2 py-1 px-3 rounded-md text-sm transition-colors ${view === 'report' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><FileText className="h-5 w-5"/> Relatório</button>}
                             </div>
                             <button onClick={() => { setTaskToDuplicate(null); setIsFormModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 text-sm md:text-base md:px-4 rounded-lg shadow-sm transition-transform transform hover:scale-105"><Plus className="h-5 w-5" /> Nova Solicitação</button>
-                            {user.email === 'andercleidesigner@gmail.com' && (
+                            
+                            <div className="relative">
+                                <button onClick={() => setIsNotificationsOpen(true)} className="p-2 rounded-full hover:bg-gray-200" title="Notificações">
+                                    <Bell className="h-5 w-5"/>
+                                    {unreadCount > 0 && <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>}
+                                </button>
+                            </div>
+
+                            {isAdmin && (
                                 <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 rounded-full hover:bg-gray-200" title="Configurações"><Settings className="h-5 w-5"/></button>
                             )}
                             <button onClick={() => window.firebAuth.signOut(auth)} className="flex items-center gap-2 text-red-500 hover:text-red-700 font-semibold text-sm md:text-base"><LogOut className="h-5 w-5"/> Sair</button>
@@ -622,10 +1122,18 @@
 
                     {loading ? <div className="flex justify-center items-center h-[calc(100vh-80px)]"><p>A carregar tarefas...</p></div> : (
                         <main className="p-4 md:p-8">
+                            {view === 'dashboard' && isAdmin && <DashboardView tasks={tasks} />}
                             {view === 'board' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     {columnNames.map(columnName => (
-                                        <div key={columnName} className={`rounded-lg ${columnStyles[columnName]} p-1`}>
+                                        <div 
+                                            key={columnName} 
+                                            className={`rounded-lg ${columnStyles[columnName]} p-1 transition-all duration-300 ${draggedOverColumn === columnName ? 'border-2 border-dashed border-gray-500' : 'border-2 border-transparent'}`}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDragEnter={() => setDraggedOverColumn(columnName)}
+                                            onDragLeave={() => setDraggedOverColumn(null)}
+                                            onDrop={(e) => handleDrop(e, columnName)}
+                                        >
                                             <div className="p-3">
                                                 <h2 className="font-bold text-lg mb-4 text-gray-700">{columnName} ({tasks.filter(t => t.status === columnName).length})</h2>
                                                 <div className="space-y-4">
@@ -645,13 +1153,17 @@
                                 </div>
                             )}
                             {view === 'calendar' && <CalendarView tasks={tasks} onTaskClick={openTaskDetails} />}
+                            {view === 'report' && isAdmin && <ReportView tasks={tasks} />}
                         </main>
                     )}
 
-                    {isFormModalOpen && <TaskFormModal user={user} onClose={closeAllModals} onSave={handleAddTask} initialData={taskToDuplicate}/>}
-                    {selectedTask && <TaskDetailModal user={user} task={selectedTask} onClose={closeAllModals} onUpdate={handleUpdateTask} onDelete={confirmDeleteTask}/>}
-                    {isDeleteModalOpen && <ConfirmationModal message="Tem certeza que deseja excluir esta tarefa?" onConfirm={handleDeleteTask} onCancel={closeAllModals} />}
-                    {isSettingsModalOpen && <SettingsModal currentSettings={settings} onSave={handleSaveSettings} onClose={closeAllModals} />}
+                    <div className="no-print">
+                        {isNotificationsOpen && <NotificationsPanel notifications={notifications} onNotificationClick={handleNotificationClick} onClose={() => setIsNotificationsOpen(false)} />}
+                        {isFormModalOpen && <TaskFormModal user={user} onClose={closeAllModals} onSave={handleAddTask} initialData={taskToDuplicate} />}
+                        {selectedTask && <TaskDetailModal user={user} task={selectedTask} onClose={closeAllModals} onUpdate={handleUpdateTask} onDelete={confirmDeleteTask} createNotification={createNotification} />}
+                        {isDeleteModalOpen && <ConfirmationModal message="Tem certeza que deseja excluir esta tarefa?" onConfirm={handleDeleteTask} onCancel={closeAllModals} />}
+                        {isSettingsModalOpen && <SettingsModal currentSettings={settings} onSave={handleSaveSettings} onClose={closeAllModals} />}
+                    </div>
                 </div>
             );
         };
