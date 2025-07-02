@@ -38,8 +38,15 @@
             }
             #printable-area {
                 display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 1rem;
+                margin: 0;
                 box-shadow: none !important;
                 border: none !important;
+                background-color: white !important;
             }
             #printable-area, #printable-area * {
                 color: black !important;
@@ -170,6 +177,13 @@
         const RichTextEditor = ({ value, onChange, placeholder }) => {
             const editorRef = useRef(null);
 
+            useEffect(() => {
+                const editor = editorRef.current;
+                if (editor && editor.innerHTML !== value) {
+                    editor.innerHTML = value;
+                }
+            }, [value]);
+
             const handleInput = (e) => {
                 onChange(e.target.innerHTML);
             };
@@ -198,7 +212,6 @@
                         contentEditable={true}
                         onInput={handleInput}
                         onPaste={handlePaste}
-                        dangerouslySetInnerHTML={{ __html: value }}
                         className="w-full p-2 min-h-[100px] outline-none text-gray-800"
                         data-placeholder={placeholder}
                     />
