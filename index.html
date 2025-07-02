@@ -34,18 +34,12 @@
             }
             main {
                 padding: 0 !important;
+                background-color: white !important;
             }
             #printable-area {
                 display: block !important;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 1rem;
-                margin: 0;
                 box-shadow: none !important;
                 border: none !important;
-                background-color: white !important;
             }
             #printable-area, #printable-area * {
                 color: black !important;
@@ -896,6 +890,7 @@
             const formatDate = (ts) => ts ? ts.toDate().toLocaleDateString('pt-BR') : 'N/A';
 
             const tasksToDo = filteredTasks ? filteredTasks.filter(t => t.status === 'A Fazer') : [];
+            const tasksInProgress = filteredTasks ? filteredTasks.filter(t => t.status === 'Em Andamento') : [];
             const tasksInApproval = filteredTasks ? filteredTasks.filter(t => t.status === 'Em Aprovação') : [];
             const tasksCompleted = filteredTasks ? filteredTasks.filter(t => t.status === 'Concluído') : [];
 
@@ -932,6 +927,10 @@
                                 <div>
                                     <h3 className="text-lg font-semibold border-b-2 border-gray-300 pb-2 mb-3">A Fazer ({tasksToDo.length})</h3>
                                     {tasksToDo.length > 0 ? tasksToDo.map(task => <p key={task.id} className="text-sm py-1 border-b border-gray-100">{task.title} - <span className="text-gray-500">Solicitante: {task.requester}</span></p>) : <p className="text-sm text-gray-500">Nenhuma tarefa.</p>}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold border-b-2 border-gray-300 pb-2 mb-3">Em Andamento ({tasksInProgress.length})</h3>
+                                    {tasksInProgress.length > 0 ? tasksInProgress.map(task => <p key={task.id} className="text-sm py-1 border-b border-gray-100">{task.title} - <span className="text-gray-500">Solicitante: {task.requester}</span></p>) : <p className="text-sm text-gray-500">Nenhuma tarefa.</p>}
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-semibold border-b-2 border-gray-300 pb-2 mb-3">Em Aprovação ({tasksInApproval.length})</h3>
@@ -1131,12 +1130,12 @@
                                 <p className="text-xs md:text-sm text-gray-500">Sistema de Gerenciamento de Artes</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center sm:justify-start">
                             <div className="flex items-center bg-gray-200 rounded-lg p-1 flex-wrap">
-                                {isAdmin && <button onClick={() => setView('dashboard')} className={`flex items-center gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'dashboard' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><LayoutDashboard className="h-5 w-5"/><span className="hidden md:inline">Dashboard</span></button>}
-                                <button onClick={() => setView('board')} className={`flex items-center gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'board' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><Columns className="h-5 w-5"/><span className="hidden md:inline">Quadro</span></button>
-                                <button onClick={() => setView('calendar')} className={`flex items-center gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'calendar' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><CalendarDays className="h-5 w-5"/><span className="hidden md:inline">Calendário</span></button>
-                                {isAdmin && <button onClick={() => setView('report')} className={`flex items-center gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'report' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><FileText className="h-5 w-5"/><span className="hidden md:inline">Relatório</span></button>}
+                                {isAdmin && <button onClick={() => setView('dashboard')} className={`flex items-center gap-1 sm:gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'dashboard' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><LayoutDashboard className="h-5 w-5"/><span className="hidden sm:inline">Dashboard</span></button>}
+                                <button onClick={() => setView('board')} className={`flex items-center gap-1 sm:gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'board' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><Columns className="h-5 w-5"/><span className="hidden sm:inline">Quadro</span></button>
+                                <button onClick={() => setView('calendar')} className={`flex items-center gap-1 sm:gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'calendar' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><CalendarDays className="h-5 w-5"/><span className="hidden sm:inline">Calendário</span></button>
+                                {isAdmin && <button onClick={() => setView('report')} className={`flex items-center gap-1 sm:gap-2 py-1 px-2 md:px-3 rounded-md text-sm transition-colors ${view === 'report' ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}><FileText className="h-5 w-5"/><span className="hidden sm:inline">Relatório</span></button>}
                             </div>
                             <button onClick={() => { setTaskToDuplicate(null); setIsFormModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 text-sm md:px-4 rounded-lg shadow-sm transition-transform transform hover:scale-105"><Plus className="h-5 w-5" /> <span className="hidden sm:inline">Nova Solicitação</span></button>
                             
