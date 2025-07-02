@@ -1028,7 +1028,7 @@
 
             const handleAddTask = async (taskData) => {
                 try {
-                    await addDoc(collection(db, "tasks"), { 
+                    const docRef = await addDoc(collection(db, "tasks"), { 
                         ...taskData,
                         status: 'A Fazer', 
                         createdAt: serverTimestamp(), 
@@ -1036,6 +1036,13 @@
                         artHistory: [],
                         comments: []
                     });
+                    
+                    const message = `Nova tarefa criada por ${taskData.requester}: "${taskData.title}"`;
+                    adminUsers.forEach(adminEmail => {
+                        const adminUsername = adminEmail.split('@')[0];
+                        createNotification(adminUsername, message, docRef.id);
+                    });
+
                     closeAllModals();
                 } catch (error) { 
                     console.error("Erro ao adicionar tarefa: ", error);
@@ -1102,7 +1109,7 @@
                 setIsDeleteModalOpen(false);
                 setTaskToDelete(null);
                 setTaskToDuplicate(null);
-                setIsSettingsModalOpen(false);
+                setIsNotificationsOpen(false);
             };
 
             const handleDrop = (e, newStatus) => {
