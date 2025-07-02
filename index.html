@@ -22,44 +22,6 @@
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         window.firebAuth = { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence };
     </script>
-    <style>
-        @media print {
-            body {
-                background-color: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .no-print {
-                display: none !important;
-            }
-            main {
-                padding: 0 !important;
-                background-color: white !important;
-            }
-            #printable-area {
-                display: block !important;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 1rem;
-                margin: 0;
-                box-shadow: none !important;
-                border: none !important;
-                background-color: white !important;
-            }
-            #printable-area, #printable-area * {
-                color: black !important;
-                background-color: white !important;
-                box-shadow: none !important;
-                border-color: #ccc !important;
-            }
-            @page {
-                size: A4;
-                margin: 1.5cm;
-            }
-        }
-    </style>
 </head>
 <body class="bg-gray-100">
 
@@ -679,7 +641,7 @@
                                                 <div className="text-center">
                                                     <p className="text-xs font-semibold">Ref. {String(index + 1).padStart(2, '0')}</p>
                                                     <button onClick={() => handleDownload(file.url, file.originalName)} className="mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200" title="Download">
-                                                        <Download className="w-5 h-5"/>
+                                                        <Download className="h-5 w-5"/>
                                                     </button>
                                                 </div>
                                             </div>
