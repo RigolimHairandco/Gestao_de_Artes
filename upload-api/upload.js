@@ -1,40 +1,41 @@
-const express = require('express');
-const multer = require('multer');
-const { Storage } = require('@google-cloud/storage');
-const path = require('path');
+import express from "express";
+import multer from "multer";
+import { Storage } from "@google-cloud/storage";
+import fs from "fs";
+import path from "path";
+
+// Setup
 const app = express();
 const port = 3000;
+const upload = multer({ dest: "uploads/" });
 
-// Configura o Multer
-const upload = multer({ storage: multer.memoryStorage() });
+// Autenticação
+const keyPath = "./gcp-key.json";
+fs.writeFileSync(keyPath, process.env.GCP_SERVICE_KEY); // cria arquivo com secret
 
-// Inicializa o GCS
-const storage = new Storage({
-  keyFilename: 'upload-client-key.json', // Nome do arquivo da chave de serviço
-});
-const bucketName = 'NOME_DO_BUCKET'; // 🔁 Substitua pelo nome do seu bucket real
-const bucket = storage.bucket(bucketName);
+const storage = new Storage({ keyFilename: keyPath });
+const bucketName = "rigolim-upload-artes"; // <-- altere se for outro nome
 
-// Endpoint para upload
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post("/upload", upload.single("file"), async (req, res) => {
+  const file = req.file;
+
+  if (!file) return res.status(400).send("Nenhum arquivo enviado.");
+
+  const destination = file.originalname;
+  const blob = storage.bucket(bucketName).file(destination);
+
   try {
-    if (!req.file) return res.status(400).send('Nenhum arquivo enviado');
-
-    const blob = bucket.file(req.file.originalname);
-    const blobStream = blob.createWriteStream();
-
-    blobStream.on('error', err => res.status(500).send(err));
-    blobStream.on('finish', () => {
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-      res.status(200).send({ url: publicUrl });
+    await blob.save(fs.readFileSync(file.path));
+    fs.unlinkSync(file.path); // limpa arquivo temporário
+    return res.status(200).send({
+      message: "Upload realizado com sucesso.",
+      gcs_url: `https://storage.googleapis.com/${bucketName}/${destination}`
     });
-
-    blobStream.end(req.file.buffer);
-  } catch (error) {
-    res.status(500).send(error);
+  } catch (err) {
+    return res.status(500).send({ error: err.message });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Upload API rodando em http://localhost:${port}`);
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });
