@@ -2,81 +2,61 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Sistema de Upload - Rigolim</title>
+  <title>Gerenciamento de Artes Rigolim</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      padding: 2rem;
+      background-color: #f2f2f2;
+      padding: 20px;
       text-align: center;
     }
 
-    .container {
+    .upload-container {
       background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
+      padding: 20px;
+      border-radius: 10px;
       max-width: 500px;
       margin: 0 auto;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    h2 {
-      margin-bottom: 1.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     input[type="file"] {
-      margin-bottom: 1rem;
-    }
-
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      background: #000;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #333;
+      margin-bottom: 10px;
     }
 
     .preview {
-      margin-top: 1.5rem;
+      margin-top: 20px;
     }
 
     .preview img {
       max-width: 100%;
       height: auto;
-      margin-top: 1rem;
-      border-radius: 4px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+      border: 1px solid #ccc;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Upload para Cloud Storage</h2>
-
+  <div class="upload-container">
+    <h2>Upload de Arte para GCS</h2>
     <input type="file" id="fileInput" />
     <br />
-    <button onclick="uploadFile()">Enviar Imagem</button>
+    <button onclick="uploadImage()">Enviar</button>
 
-    <div class="preview" id="previewContainer" style="display:none;">
-      <p>Imagem enviada com sucesso:</p>
+    <div class="preview" id="preview" style="display:none;">
+      <p>Upload realizado com sucesso:</p>
       <a id="imageLink" href="#" target="_blank">Abrir imagem</a>
-      <img id="uploadedImage" src="" />
+      <img id="imagePreview" src="" alt="Preview da imagem" />
     </div>
   </div>
 
   <script>
-    async function uploadFile() {
+    async function uploadImage() {
       const fileInput = document.getElementById("fileInput");
       const file = fileInput.files[0];
       if (!file) {
-        alert("Selecione um arquivo antes de enviar.");
+        alert("Selecione uma imagem.");
         return;
       }
 
@@ -94,14 +74,14 @@
         if (response.ok) {
           const imageUrl = result.gcs_url;
           document.getElementById("imageLink").href = imageUrl;
-          document.getElementById("uploadedImage").src = imageUrl;
-          document.getElementById("previewContainer").style.display = "block";
+          document.getElementById("imagePreview").src = imageUrl;
+          document.getElementById("preview").style.display = "block";
         } else {
-          alert("Erro ao fazer upload: " + (result.error || "Erro desconhecido."));
+          alert("Erro ao enviar: " + (result.error || "erro desconhecido"));
         }
-      } catch (err) {
-        console.error(err);
-        alert("Falha ao conectar com o servidor.");
+      } catch (error) {
+        console.error("Erro no upload:", error);
+        alert("Erro ao conectar com o servidor.");
       }
     }
   </script>
