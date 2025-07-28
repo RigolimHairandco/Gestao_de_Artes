@@ -10,16 +10,21 @@ const app = express();
 const port = process.env.PORT || 3000;
 const upload = multer({ dest: "uploads/" });
 
-// Grava a chave de autenticação
+// Caminho do arquivo da chave
 const keyPath = "./gcp-key.json";
+
+// Cria o arquivo da chave se não existir
 if (!fs.existsSync(keyPath)) {
   fs.writeFileSync(keyPath, process.env.GCP_SERVICE_KEY);
 }
 
+// Inicializa o cliente do Storage com a chave
 const storage = new Storage({ keyFilename: keyPath });
-const bucketName = "rigolim-upload-artes";
 
-// Configuração de CORS
+// Nome do bucket CORRETO
+const bucketName = "imagens-gestor-artes";
+
+// Configuração de CORS para permitir acesso do GitHub Pages
 app.use(cors({
   origin: "https://rigolimhairandco.github.io",
   methods: ["POST"],
@@ -42,10 +47,12 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       gcs_url: `https://storage.googleapis.com/${bucketName}/${destination}`
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).send({ error: err.message });
   }
 });
 
+// Inicia o servidor
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
