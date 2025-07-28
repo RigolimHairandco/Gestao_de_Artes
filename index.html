@@ -1,117 +1,108 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sistema de Upload - Rigolim</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Upload e Visualização de Imagem</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f3f3f3;
+      background: #f2f2f2;
       padding: 2rem;
     }
-
-    .card {
-      max-width: 600px;
-      background: white;
+    .container {
+      background: #fff;
       padding: 2rem;
-      margin: auto;
       border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: 0 auto;
       text-align: center;
     }
-
-    .card input[type="file"] {
-      display: block;
-      margin: 1rem auto;
-    }
-
-    .card button {
-      background-color: #0f8cff;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .card button:hover {
-      background-color: #0c6fd1;
-    }
-
-    .result {
-      margin-top: 2rem;
-    }
-
-    .result img {
+    #preview {
+      margin-top: 20px;
       max-width: 100%;
-      margin-top: 1rem;
+      height: auto;
       border-radius: 8px;
     }
-
-    .link-area {
-      margin-top: 1rem;
-      display: flex;
-      gap: 0.5rem;
-      flex-direction: column;
-    }
-
-    .link-area input {
+    input[type="text"] {
       width: 100%;
-      padding: 10px;
+      padding: 8px;
+      margin-top: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .copiado {
+      color: green;
+      font-size: 14px;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Enviar imagem para a nuvem ☁️</h2>
+  <div class="container">
+    <h2>Upload de Imagem para GCS</h2>
     <input type="file" id="fileInput" />
-    <button onclick="upload()">Enviar</button>
-
-    <div class="result" id="result" style="display: none;">
-      <div class="link-area">
-        <input type="text" id="url" readonly />
-        <button onclick="copy()">Copiar Link</button>
-      </div>
-      <img id="preview" src="" />
+    <button onclick="uploadImage()">Enviar Imagem</button>
+    <div id="previewContainer" style="display:none;">
+      <h3>Visualização:</h3>
+      <img id="preview" />
+      <input type="text" id="imageUrl" readonly />
+      <button onclick="copiarLink()">Copiar Link</button>
+      <div class="copiado" id="mensagemCopiado" style="display: none;">Link copiado com sucesso!</div>
     </div>
   </div>
 
   <script>
-    async function upload() {
+    async function uploadImage() {
       const input = document.getElementById('fileInput');
       const file = input.files[0];
-      if (!file) return alert('Selecione uma imagem.');
+      if (!file) return alert('Selecione um arquivo.');
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
       try {
-        const response = await fetch("https://upload-api-641611102306.us-central1.run.app/upload", {
-          method: "POST",
+        const response = await fetch('https://upload-api-641611102306.us-central1.run.app/upload', {
+          method: 'POST',
           body: formData
         });
 
-        const data = await response.json();
+        const result = await response.json();
 
-        if (response.ok && data.gcs_url) {
-          document.getElementById("url").value = data.gcs_url;
-          document.getElementById("preview").src = data.gcs_url;
-          document.getElementById("result").style.display = "block";
+        if (response.ok) {
+          const url = result.gcs_url;
+          document.getElementById('preview').src = url;
+          document.getElementById('imageUrl').value = url;
+          document.getElementById('previewContainer').style.display = 'block';
+          document.getElementById('mensagemCopiado').style.display = 'none';
         } else {
-          alert("Erro ao enviar: " + (data.error || "Erro desconhecido."));
+          alert('Erro ao enviar: ' + (result.error || 'Erro desconhecido'));
         }
       } catch (err) {
-        alert("Erro de conexão com servidor.");
         console.error(err);
+        alert('Erro na conexão com o servidor.');
       }
     }
 
-    function copy() {
-      const input = document.getElementById("url");
+    function copiarLink() {
+      const input = document.getElementById('imageUrl');
       input.select();
-      document.execCommand("copy");
-      alert("Link copiado com sucesso!");
+      input.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      document.getElementById('mensagemCopiado').style.display = 'block';
     }
   </script>
 </body>
