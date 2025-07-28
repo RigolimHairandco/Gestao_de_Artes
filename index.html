@@ -496,7 +496,6 @@
             const currentUser = user.email.split('@')[0];
             const isOwner = currentUser === initialTask.requester;
             const isEditable = initialTask.status === 'A Fazer' && isOwner;
-            // NOVO: Permissão para gerir ficheiros de produção
             const isProductionManager = user.email === 'andercleidesigner@gmail.com';
 
             useEffect(() => {
@@ -587,46 +586,30 @@
             };
             
             const handleArtFileUpload = async (e, attachmentToReplace = null) => {
-                const file = e.target.files[0];
-                if (!file) return;
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
 
                 setIsUploading(true);
                 setUploadProgress(0);
 
                 try {
-                    const uploadedFile = await uploadFileWithProgress(file, setUploadProgress);
-                    const taskDocRef = doc(db, "tasks", task.id);
-                    const now = new Date();
-                    const newFileUrl = uploadedFile.url;
-
-                    if (attachmentToReplace) {
-                        await deleteFileFromGCS(attachmentToReplace.url);
-                        const newVersion = (attachmentToReplace.version || 1) + 1;
-                        const newAttachments = task.approvalAttachments.map(att =>
-                            att.url === attachmentToReplace.url
-                            ? { ...att, url: newFileUrl, originalName: file.name, version: newVersion, status: 'pending', alterationNotes: '' }
-                            : att
-                        );
-                        await updateDoc(taskDocRef, {
-                            approvalAttachments: newAttachments,
-                            artHistory: arrayUnion({
-                                artName: attachmentToReplace.name,
-                                version: newVersion,
-                                status: 'Reenviado para ajuste',
-                                timestamp: now
-                            })
-                        });
-                    } else {
-                        const newAttachment = {
-                            name: `Arte ${task.approvalAttachments.length + 1}`,
-                            originalName: file.name,
-                            url: newFileUrl,
+                    const newAttachments = [];
+                    for (const file of files) {
+                        const uploadedFile = await uploadFileWithProgress(file, setUploadProgress);
+                        newAttachments.push({
+                            name: `Arte ${task.approvalAttachments.length + newAttachments.length + 1}`,
+                            originalName: uploadedFile.originalName,
+                            url: uploadedFile.url,
                             status: 'pending',
                             version: 1,
-                            uploadedAt: now
-                        };
+                            uploadedAt: new Date()
+                        });
+                    }
+
+                    if (newAttachments.length > 0) {
+                        const taskDocRef = doc(db, "tasks", task.id);
                         await updateDoc(taskDocRef, {
-                            approvalAttachments: arrayUnion(newAttachment)
+                            approvalAttachments: arrayUnion(...newAttachments)
                         });
                     }
                 } catch (error) {
@@ -731,6 +714,9 @@
             const handleDownload = async (url, filename) => {
                 try {
                     const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Falha na rede: ${response.statusText}. Verifique a configuração de CORS no seu bucket do Google Cloud Storage.`);
+                    }
                     const blob = await response.blob();
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
@@ -740,6 +726,7 @@
                     document.body.removeChild(link);
                 } catch (error) {
                     console.error("Erro ao baixar o arquivo:", error);
+                    alert(`Não foi possível baixar o ficheiro. Motivo: ${error.message}. O ficheiro será aberto numa nova aba.`);
                     window.open(url, '_blank');
                 }
             };
@@ -871,7 +858,7 @@
                                                 <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
                                             </div>
                                         )}
-                                    </a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleArtFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={(e) => handleArtFileUpload(e)} disabled={isUploading} accept="image/*,application/pdf,.psd,.ai,.eps" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>
+                                    </a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleArtFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" multiple onChange={(e) => handleArtFileUpload(e)} disabled={isUploading} accept="image/*,application/pdf,.psd,.ai,.eps" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>
                                     {isUploading && (
                                         <div className="mt-2">
                                             <p className="text-sm text-center mb-1">A carregar...</p>
@@ -892,16 +879,16 @@
                                             </div>
                                         )}
                                     </a> <div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> {att.status !== 'approved' && att.status !== 'rejected' && (<div className="flex justify-center gap-2"><button onClick={() => handleAttachmentStatusChange(i, 'approved')} className="p-1.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Aprovar"><CheckCircle2 className="w-5 h-5"/></button><button onClick={() => {setOpenAlterationIndex(i); setAlterationNotes(att.alterationNotes || '');}} className="p-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200" title="Solicitar Alteração"><RefreshCw className="w-5 h-5"/></button></div>)} {att.status === 'approved' && <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-4 h-4"/></div>} {att.status === 'rejected' && <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><RefreshCw className="w-4 h-4"/></div>} {openAlterationIndex === i && (<div><textarea value={alterationNotes} onChange={(e) => setAlterationNotes(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-1 text-xs" placeholder="Descreva a alteração..."></textarea><button onClick={() => {handleAttachmentStatusChange(i, 'rejected', alterationNotes); setOpenAlterationIndex(null);}} className="text-xs bg-blue-500 text-white px-2 py-1 mt-1 rounded-md hover:bg-blue-600 w-full">Salvar Alteração</button></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte para aprovação.</p>}</div></div><div className="border-t pt-4 flex flex-col gap-3">{someArtRejected && <button onClick={handleReturnForAdjustment} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg w-full">Devolver para Ajuste</button>}{allArtsApproved && <button onClick={handleFinalizeTask} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Finalizar Tarefa Aprovada</button>}</div></div> )}
-                                    {task.status === 'Concluído' && ( <div className="border-t pt-4 space-y-4"> <div> <p className="text-sm font-medium text-gray-700">Artes Aprovadas:</p> <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4"> {approvalAttachments.length > 0 ? approvalAttachments.filter(att => att.status === 'approved').map((att, i) => { const newFilename = att.originalName; return ( <div key={i} className="flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
+                                    {task.status === 'Concluído' && ( <div className="border-t pt-4 space-y-4"> <div> <p className="text-sm font-medium text-gray-700">Artes Aprovadas:</p> <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4"> {approvalAttachments.length > 0 ? approvalAttachments.filter(att => att.status === 'approved').map((att, i) => { const newFilename = att.originalName; const isDownloadDisabled = productionFiles.length > 0; return ( <div key={i} className="flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
                                         {isImageFile(att.originalName) ? (
-                                            <img src={att.url} alt={att.name} className="h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500"/>
+                                            <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
                                         ) : (
-                                            <div className="h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ring-green-500">
+                                            <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}>
                                                 <FileText className="w-12 h-12 text-gray-600"/>
                                                 <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
                                             </div>
                                         )}
-                                    </a> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} className="mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200" title="Download"><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
+                                    </a> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} disabled={isDownloadDisabled} className={`mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed`} title={isDownloadDisabled ? "Download desativado pois existe um ficheiro de produção" : "Download"}><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
                                 </>
                             )}
                             
@@ -1255,7 +1242,7 @@
                         approvalAttachments: [], 
                         artHistory: [],
                         comments: [],
-                        productionFiles: [] // NOVO: Inicia a tarefa com um array vazio
+                        productionFiles: []
                     });
                     
                     const message = `Nova tarefa criada por ${taskData.requester}: "${taskData.title}"`;
@@ -1322,11 +1309,10 @@
                 const taskData = tasks.find(t => t.id === taskToDelete);
                 
                 if (taskData) {
-                    // Apaga todos os ficheiros associados do GCS
                     const filesToDelete = [
                         ...(taskData.referenceFiles || []),
                         ...(taskData.approvalAttachments || []),
-                        ...(taskData.productionFiles || []) // NOVO: Inclui ficheiros de produção
+                        ...(taskData.productionFiles || [])
                     ];
                     
                     await Promise.all(filesToDelete.map(file => deleteFileFromGCS(file.url)));
