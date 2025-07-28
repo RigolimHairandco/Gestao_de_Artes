@@ -2,89 +2,86 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Upload para GCS - Rigolim Hair & Co</title>
+  <title>Sistema de Upload - Rigolim</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      background-color: #f3f3f3;
       padding: 2rem;
     }
-    .container {
-      background-color: #fff;
-      max-width: 600px;
-      margin: auto;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input[type="file"] {
-      margin-bottom: 1rem;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0f5cd7;
-    }
+
     .card {
-      background-color: #fafafa;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 1.5rem;
+      max-width: 600px;
+      background: white;
+      padding: 2rem;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
-    .card img {
-      max-width: 100%;
-      border-radius: 5px;
-      margin-top: 1rem;
+
+    .card input[type="file"] {
+      display: block;
+      margin: 1rem auto;
     }
-    .link-container {
+
+    .card button {
+      background-color: #0f8cff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .card button:hover {
+      background-color: #0c6fd1;
+    }
+
+    .result {
+      margin-top: 2rem;
+    }
+
+    .result img {
+      max-width: 100%;
+      margin-top: 1rem;
+      border-radius: 8px;
+    }
+
+    .link-area {
       margin-top: 1rem;
       display: flex;
+      gap: 0.5rem;
       flex-direction: column;
-      gap: 10px;
     }
-    input.copy-link {
-      padding: 10px;
-      font-size: 0.9rem;
+
+    .link-area input {
       width: 100%;
+      padding: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Upload de Imagens - Rigolim Hair & Co</h2>
+  <div class="card">
+    <h2>Enviar imagem para a nuvem ☁️</h2>
     <input type="file" id="fileInput" />
-    <br />
-    <button onclick="uploadImage()">Enviar Imagem</button>
+    <button onclick="upload()">Enviar</button>
 
-    <div id="card" class="card" style="display: none;">
-      <h3>Imagem enviada com sucesso!</h3>
-      <div class="link-container">
-        <input type="text" id="imageURL" class="copy-link" readonly />
-        <button onclick="copyLink()">Copiar Link</button>
+    <div class="result" id="result" style="display: none;">
+      <div class="link-area">
+        <input type="text" id="url" readonly />
+        <button onclick="copy()">Copiar Link</button>
       </div>
-      <a id="imageAnchor" href="#" target="_blank">
-        <img id="imagePreview" src="" alt="Preview da imagem" />
-      </a>
+      <img id="preview" src="" />
     </div>
   </div>
 
   <script>
-    async function uploadImage() {
-      const fileInput = document.getElementById("fileInput");
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("Selecione uma imagem para enviar.");
-        return;
-      }
+    async function upload() {
+      const input = document.getElementById('fileInput');
+      const file = input.files[0];
+      if (!file) return alert('Selecione uma imagem.');
 
       const formData = new FormData();
       formData.append("file", file);
@@ -95,29 +92,26 @@
           body: formData
         });
 
-        const result = await response.json();
+        const data = await response.json();
 
-        if (response.ok) {
-          const imageUrl = result.gcs_url;
-          document.getElementById("imageURL").value = imageUrl;
-          document.getElementById("imagePreview").src = imageUrl;
-          document.getElementById("imageAnchor").href = imageUrl;
-          document.getElementById("card").style.display = "block";
+        if (response.ok && data.gcs_url) {
+          document.getElementById("url").value = data.gcs_url;
+          document.getElementById("preview").src = data.gcs_url;
+          document.getElementById("result").style.display = "block";
         } else {
-          alert("Erro: " + (result.error || "Erro desconhecido."));
+          alert("Erro ao enviar: " + (data.error || "Erro desconhecido."));
         }
       } catch (err) {
+        alert("Erro de conexão com servidor.");
         console.error(err);
-        alert("Falha ao conectar com o servidor.");
       }
     }
 
-    function copyLink() {
-      const input = document.getElementById("imageURL");
+    function copy() {
+      const input = document.getElementById("url");
       input.select();
-      input.setSelectionRange(0, 99999); // Para mobile
       document.execCommand("copy");
-      alert("Link copiado: " + input.value);
+      alert("Link copiado com sucesso!");
     }
   </script>
 </body>
