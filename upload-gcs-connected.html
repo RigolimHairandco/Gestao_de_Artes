@@ -1,31 +1,62 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teste de Upload para GCS</title>
+  <title>Upload para Google Cloud Storage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+      text-align: center;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 400px;
+      margin: 0 auto;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    .preview {
+      margin-top: 1rem;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 1rem;
+    }
+  </style>
 </head>
 <body>
-  <h2>Upload para o Google Cloud Storage</h2>
-  <form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" name="file" id="fileInput" />
-    <button type="submit">Enviar</button>
-  </form>
-  <div id="result"></div>
+  <div class="container">
+    <h2>Upload para Cloud Storage</h2>
+    <input type="file" id="fileInput" />
+    <br />
+    <button onclick="uploadFile()">Enviar Imagem</button>
+
+    <div class="preview" id="previewContainer" style="display:none;">
+      <p>Imagem enviada com sucesso:</p>
+      <a id="imageLink" href="#" target="_blank">Abrir imagem</a>
+      <img id="uploadedImage" src="" />
+    </div>
+  </div>
 
   <script>
-    const form = document.getElementById('uploadForm');
-    const resultDiv = document.getElementById('result');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fileInput = document.getElementById('fileInput');
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
       const file = fileInput.files[0];
-      if (!file) return alert("Selecione um arquivo!");
+      if (!file) {
+        alert("Selecione um arquivo antes de enviar.");
+        return;
+      }
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       try {
         const response = await fetch("https://upload-api-641611102306.us-central1.run.app/upload", {
@@ -34,15 +65,20 @@
         });
 
         const result = await response.json();
+
         if (response.ok) {
-          resultDiv.innerHTML = `<p><strong>✅ Upload feito com sucesso!</strong></p><p><a href="${result.gcs_url}" target="_blank">Ver arquivo</a></p>`;
+          const imageUrl = result.gcs_url;
+          document.getElementById("imageLink").href = imageUrl;
+          document.getElementById("uploadedImage").src = imageUrl;
+          document.getElementById("previewContainer").style.display = "block";
         } else {
-          resultDiv.innerHTML = `<p style="color:red;"><strong>❌ Erro:</strong> ${result.error}</p>`;
+          alert("Erro ao fazer upload: " + (result.error || "Erro desconhecido."));
         }
-      } catch (error) {
-        resultDiv.innerHTML = `<p style="color:red;"><strong>❌ Erro:</strong> ${error.message}</p>`;
+      } catch (err) {
+        console.error(err);
+        alert("Falha ao conectar com o servidor.");
       }
-    });
+    }
   </script>
 </body>
 </html>
