@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teste de Upload para GCS</title>
+</head>
+<body>
+  <h2>Upload para o Google Cloud Storage</h2>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" id="fileInput" />
+    <button type="submit">Enviar</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert("Selecione um arquivo!");
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch("https://upload-api-641611102306.us-central1.run.app/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          resultDiv.innerHTML = `<p><strong>✅ Upload feito com sucesso!</strong></p><p><a href="${result.gcs_url}" target="_blank">Ver arquivo</a></p>`;
+        } else {
+          resultDiv.innerHTML = `<p style="color:red;"><strong>❌ Erro:</strong> ${result.error}</p>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<p style="color:red;"><strong>❌ Erro:</strong> ${error.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
