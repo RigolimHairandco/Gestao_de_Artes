@@ -2,67 +2,78 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Sistema de Upload - Rigolim</title>
+  <title>Upload para GCS - Rigolim Hair & Co</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f3f3f3;
+      background-color: #f7f7f7;
       padding: 2rem;
     }
     .container {
-      background: #fff;
+      background-color: #fff;
+      max-width: 600px;
+      margin: auto;
       padding: 2rem;
       border-radius: 10px;
-      max-width: 700px;
-      margin: 0 auto;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .preview {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .preview img {
-      max-width: 100%;
-      margin-top: 10px;
-    }
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 1rem;
-      background: #fafafa;
-    }
     input[type="file"] {
-      margin-top: 1rem;
+      margin-bottom: 1rem;
     }
     button {
-      margin-top: 1rem;
       padding: 10px 20px;
-      background-color: #2196F3;
+      background-color: #1a73e8;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0b7dda;
+      background-color: #0f5cd7;
+    }
+    .card {
+      background-color: #fafafa;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 5px;
+      margin-top: 1rem;
+    }
+    .link-container {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    input.copy-link {
+      padding: 10px;
+      font-size: 0.9rem;
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Upload de Imagem - Rigolim Cloud</h1>
-    <div class="card">
-      <label for="fileInput">Selecione uma imagem:</label>
-      <input type="file" id="fileInput" />
-      <button onclick="uploadImage()">Enviar para o Cloud</button>
-    </div>
+    <h2>Upload de Imagens - Rigolim Hair & Co</h2>
+    <input type="file" id="fileInput" />
+    <br />
+    <button onclick="uploadImage()">Enviar Imagem</button>
 
-    <div id="preview" class="preview" style="display: none;">
-      <h3>Imagem enviada com sucesso:</h3>
-      <a id="imgLink" href="#" target="_blank">Abrir imagem</a><br />
-      <img id="imgPreview" src="" alt="Preview da imagem" />
+    <div id="card" class="card" style="display: none;">
+      <h3>Imagem enviada com sucesso!</h3>
+      <div class="link-container">
+        <input type="text" id="imageURL" class="copy-link" readonly />
+        <button onclick="copyLink()">Copiar Link</button>
+      </div>
+      <a id="imageAnchor" href="#" target="_blank">
+        <img id="imagePreview" src="" alt="Preview da imagem" />
+      </a>
     </div>
   </div>
 
@@ -71,7 +82,7 @@
       const fileInput = document.getElementById("fileInput");
       const file = fileInput.files[0];
       if (!file) {
-        alert("Selecione um arquivo.");
+        alert("Selecione uma imagem para enviar.");
         return;
       }
 
@@ -85,18 +96,28 @@
         });
 
         const result = await response.json();
+
         if (response.ok) {
-          const link = result.gcs_url;
-          document.getElementById("imgLink").href = link;
-          document.getElementById("imgPreview").src = link;
-          document.getElementById("preview").style.display = "block";
+          const imageUrl = result.gcs_url;
+          document.getElementById("imageURL").value = imageUrl;
+          document.getElementById("imagePreview").src = imageUrl;
+          document.getElementById("imageAnchor").href = imageUrl;
+          document.getElementById("card").style.display = "block";
         } else {
-          alert("Erro: " + (result.error || "erro desconhecido."));
+          alert("Erro: " + (result.error || "Erro desconhecido."));
         }
-      } catch (error) {
-        console.error(error);
-        alert("Erro ao conectar com o servidor.");
+      } catch (err) {
+        console.error(err);
+        alert("Falha ao conectar com o servidor.");
       }
+    }
+
+    function copyLink() {
+      const input = document.getElementById("imageURL");
+      input.select();
+      input.setSelectionRange(0, 99999); // Para mobile
+      document.execCommand("copy");
+      alert("Link copiado: " + input.value);
     }
   </script>
 </body>
