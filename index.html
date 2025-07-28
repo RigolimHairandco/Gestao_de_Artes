@@ -389,15 +389,21 @@
                         method: 'POST',
                         body: formData,
                     });
+                    
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        throw new Error(`Erro de Servidor: ${response.status}. ${errText}`);
+                    }
+
                     const result = await response.json();
-                    if (response.ok && result.gcs_url) {
+                    if (result.gcs_url) {
                         setLogoUrl(result.gcs_url);
                     } else {
                         throw new Error(result.error || 'Erro ao obter URL da imagem.');
                     }
                 } catch (error) {
                     console.error("Erro no upload do logo:", error);
-                    setError("Ocorreu um erro ao enviar o logo.");
+                    setError(`Falha no upload: ${error.message}. Verifique o console para mais detalhes.`);
                 } finally {
                     setIsUploading(false);
                 }
@@ -494,7 +500,6 @@
                 onClose();
             };
 
-            // --- LÓGICA DE UPLOAD (COPIADA E ADAPTADA DE TaskFormModal) ---
             const uploadFileWithProgress = (file, onProgress) => {
                 return new Promise((resolve, reject) => {
                     const formData = new FormData();
@@ -548,12 +553,57 @@
                 if (!isEditable) return;
                 setReferenceFiles(prev => prev.filter((_, index) => index !== indexToRemove));
             };
+            
+            const handleArtFileUpload = async (e, attachmentToReplace = null) => {
+                const file = e.target.files[0];
+                if (!file) return;
 
+                setIsUploading(true);
+                setUploadProgress(0);
 
-            // --- LÓGICA ORIGINAL DO MODAL (Aprovação, Comentários, etc.) ---
-            const handleArtFileUpload = (e, attachmentToReplace = null) => {
-                 // Esta função é para o fluxo de "Em Andamento", não para a edição inicial
-                 // ... (código original mantido)
+                try {
+                    const uploadedFile = await uploadFileWithProgress(file, setUploadProgress);
+                    const taskDocRef = doc(db, "tasks", task.id);
+                    const now = new Date();
+                    const newFileUrl = uploadedFile.url;
+
+                    if (attachmentToReplace) {
+                        const newVersion = (attachmentToReplace.version || 1) + 1;
+                        const newAttachments = task.approvalAttachments.map(att =>
+                            att.url === attachmentToReplace.url
+                            ? { ...att, url: newFileUrl, originalName: file.name, version: newVersion, status: 'pending', alterationNotes: '' }
+                            : att
+                        );
+                        await updateDoc(taskDocRef, {
+                            approvalAttachments: newAttachments,
+                            artHistory: arrayUnion({
+                                artName: attachmentToReplace.name,
+                                version: newVersion,
+                                status: 'Reenviado para ajuste',
+                                timestamp: now
+                            })
+                        });
+                    } else {
+                        const newAttachment = {
+                            name: `Arte ${task.approvalAttachments.length + 1}`,
+                            originalName: file.name,
+                            url: newFileUrl,
+                            status: 'pending',
+                            version: 1,
+                            uploadedAt: now
+                        };
+                        await updateDoc(taskDocRef, {
+                            approvalAttachments: arrayUnion(newAttachment)
+                        });
+                    }
+                } catch (error) {
+                    console.error("Erro no upload da arte:", error);
+                    alert(`Ocorreu um erro ao enviar a arte: ${error.message}`);
+                } finally {
+                    setIsUploading(false);
+                    setUploadProgress(0);
+                    e.target.value = null;
+                }
             };
             
             const handleAddComment = async () => {
@@ -583,12 +633,34 @@
             };
             
             const handleAttachmentStatusChange = async (indexToUpdate, newStatus, notes = '') => {
-                // ... (código original mantido)
+                const updatedAttachments = [...task.approvalAttachments];
+                const attachment = updatedAttachments[indexToUpdate];
+                attachment.status = newStatus;
+                attachment.alterationNotes = notes;
+
+                const taskDocRef = doc(db, "tasks", task.id);
+                await updateDoc(taskDocRef, {
+                    approvalAttachments: updatedAttachments,
+                    artHistory: arrayUnion({
+                        artName: attachment.name,
+                        version: attachment.version,
+                        status: newStatus === 'approved' ? 'Aprovado' : 'Alteração Solicitada',
+                        notes: notes,
+                        timestamp: new Date()
+                    })
+                });
+                
+                const message = newStatus === 'approved' 
+                    ? `A arte "${attachment.name}" foi aprovada na tarefa "${task.title}"`
+                    : `Foi solicitada uma alteração na arte "${attachment.name}" da tarefa "${task.title}"`;
+                createNotification(task.requester, message, task.id);
+
+                setOpenAlterationIndex(null);
             };
 
             const handleReturnForAdjustment = async () => await onUpdate(task.id, { status: 'Em Andamento' });
-            const handleSendForApproval = async () => { await onUpdate(task.id, {status: 'Em Aprovação'}); onClose(); };
-            const handleFinalizeTask = async () => { await onUpdate(task.id, {status: 'Concluído'}); onClose(); };
+            const handleSendForApproval = async () => { await onUpdate(task.id, {status: 'Em Aprovação'}); handleCloseAndSaveChanges(); };
+            const handleFinalizeTask = async () => { await onUpdate(task.id, {status: 'Concluído'}); handleCloseAndSaveChanges(); };
             
             const handleDownload = async (url, filename) => {
                 try {
@@ -638,12 +710,10 @@
                                 </div>
                             </div>
                             
-                            {/* Bloco de Descrição */}
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Descrição</p>
                                 <RichTextEditor value={description} onChange={setDescription} placeholder="Descreva os detalhes..." readOnly={!isEditable} />
                             </div>
 
-                            {/* Bloco de Links de Referência */}
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Links de Referência</p>
                                 {isEditable ? (
                                     <textarea value={linkAttachments} onChange={e => setLinkAttachments(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-2" placeholder="https://drive.google.com/..."></textarea>
@@ -652,7 +722,6 @@
                                 )}
                             </div>
 
-                            {/* Bloco de Arquivos de Referência */}
                             <div className="border-t pt-4">
                                 <p className="text-sm font-medium text-gray-700">Arquivos de Referência</p>
                                 {isEditable && (
@@ -685,14 +754,52 @@
                                 {referenceFiles.length === 0 && <p className="text-sm text-gray-500">Nenhum arquivo de referência.</p>}
                             </div>
 
-                            {/* --- SEÇÕES DE FLUXO DE TRABALHO (VISÍVEIS APENAS APÓS A FASE 'A FAZER') --- */}
+                            {/* --- CÓDIGO RESTAURADO PARA FLUXO DE TRABALHO --- */}
                             {task.status !== 'A Fazer' && (
                                 <>
-                                    {/* ... (código original das seções Em Andamento, Em Aprovação, Concluído) ... */}
+                                    {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{approvalAttachments.length > 0 ? approvalAttachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
+                                        {isImageFile(att.originalName) ? (
+                                            <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
+                                        ) : (
+                                            <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}>
+                                                <FileText className="w-12 h-12 text-gray-600"/>
+                                                <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
+                                            </div>
+                                        )}
+                                    </a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleArtFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={(e) => handleArtFileUpload(e)} disabled={isUploading} accept="image/*,application/pdf,.psd,.ai,.eps" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>
+                                    {isUploading && (
+                                        <div className="mt-2">
+                                            <p className="text-sm text-center mb-1">A carregar...</p>
+                                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                                            </div>
+                                            <p className="text-center text-sm mt-1">{`${Math.round(uploadProgress)}%`}</p>
+                                        </div>
+                                    )}
+                                    </div>{approvalAttachments.length > 0 && !isUploading && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
+                                    {task.status === 'Em Aprovação' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes para Aprovação:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{approvalAttachments.length > 0 ? approvalAttachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
+                                        {isImageFile(att.originalName) ? (
+                                            <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
+                                        ) : (
+                                            <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}>
+                                                <FileText className="w-12 h-12 text-gray-600"/>
+                                                <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
+                                            </div>
+                                        )}
+                                    </a> <div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> {att.status !== 'approved' && att.status !== 'rejected' && (<div className="flex justify-center gap-2"><button onClick={() => handleAttachmentStatusChange(i, 'approved')} className="p-1.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Aprovar"><CheckCircle2 className="w-5 h-5"/></button><button onClick={() => {setOpenAlterationIndex(i); setAlterationNotes(att.alterationNotes || '');}} className="p-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200" title="Solicitar Alteração"><RefreshCw className="w-5 h-5"/></button></div>)} {att.status === 'approved' && <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-4 h-4"/></div>} {att.status === 'rejected' && <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><RefreshCw className="w-4 h-4"/></div>} {openAlterationIndex === i && (<div><textarea value={alterationNotes} onChange={(e) => setAlterationNotes(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-1 text-xs" placeholder="Descreva a alteração..."></textarea><button onClick={() => {handleAttachmentStatusChange(i, 'rejected', alterationNotes); setOpenAlterationIndex(null);}} className="text-xs bg-blue-500 text-white px-2 py-1 mt-1 rounded-md hover:bg-blue-600 w-full">Salvar Alteração</button></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte para aprovação.</p>}</div></div><div className="border-t pt-4 flex flex-col gap-3">{someArtRejected && <button onClick={handleReturnForAdjustment} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg w-full">Devolver para Ajuste</button>}{allArtsApproved && <button onClick={handleFinalizeTask} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Finalizar Tarefa Aprovada</button>}</div></div> )}
+                                    {task.status === 'Concluído' && ( <div className="border-t pt-4 space-y-4"> <div> <p className="text-sm font-medium text-gray-700">Artes Aprovadas:</p> <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4"> {approvalAttachments.length > 0 ? approvalAttachments.filter(att => att.status === 'approved').map((att, i) => { const newFilename = att.originalName; return ( <div key={i} className="flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
+                                        {isImageFile(att.originalName) ? (
+                                            <img src={att.url} alt={att.name} className="h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500"/>
+                                        ) : (
+                                            <div className="h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ring-green-500">
+                                                <FileText className="w-12 h-12 text-gray-600"/>
+                                                <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
+                                            </div>
+                                        )}
+                                    </a> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} className="mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200" title="Download"><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
                                 </>
                             )}
                             
-                            {/* --- SEÇÕES DE HISTÓRICO E COMENTÁRIOS (SEMPRE VISÍVEIS) --- */}
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Histórico de Alterações</p><div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">{task.artHistory && task.artHistory.length > 0 ? (task.artHistory.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)).map((item, index) => {const statusColor = item.status === 'Aprovado' ? 'bg-green-100 text-green-800' : item.status === 'Alteração Solicitada' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'; return (<div key={index} className="text-sm p-2 rounded-md bg-white border border-gray-200"><div className="flex justify-between items-center"><p className="font-semibold">{item.artName} <span className="font-normal text-gray-500">(v{item.version})</span></p><span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${statusColor}`}>{item.status}</span></div>{item.notes && <p className="text-xs text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Nota: {item.notes}</p>}<p className="text-xs text-gray-400 text-right mt-1">{formatHistoryDate(item.timestamp)}</p></div>); })) : (<p className="text-xs text-gray-500">Nenhum histórico de alterações.</p>)}</div></div>
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Comentários</p><div className="mt-1 space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-2 rounded-md">{task.comments && task.comments.length > 0 ? [...task.comments].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map((comment, index) => (<div key={index} className="text-sm bg-white p-2 rounded border"><p><span className="font-semibold">{comment.author}</span><span className="text-xs text-gray-500 ml-2">{new Date(comment.createdAt.seconds * 1000).toLocaleString('pt-BR')}</span></p><div className="mt-1 prose prose-sm" dangerouslySetInnerHTML={{ __html: comment.text }} /></div>)) : <p className="text-xs text-gray-500">Sem comentários.</p>}</div><div className="mt-2"><RichTextEditor value={newComment} onChange={setNewComment} placeholder="Adicionar um comentário..." /><button onClick={handleAddComment} className="mt-2 w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" title="Enviar Comentário"><Send className="h-5 w-5"/> Enviar</button></div></div>
                             
