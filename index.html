@@ -55,6 +55,7 @@
         const LayoutDashboard = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>);
         const Printer = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>);
         const FileText = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>);
+        const UploadCloud = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>);
 
         // --- Configuração do Firebase ---
         const firebaseConfig = {
@@ -495,6 +496,8 @@
             const currentUser = user.email.split('@')[0];
             const isOwner = currentUser === initialTask.requester;
             const isEditable = initialTask.status === 'A Fazer' && isOwner;
+            // NOVO: Permissão para gerir ficheiros de produção
+            const isProductionManager = user.email === 'andercleidesigner@gmail.com';
 
             useEffect(() => {
                 const taskDocRef = doc(db, "tasks", initialTask.id);
@@ -635,6 +638,38 @@
                     e.target.value = null;
                 }
             };
+
+            // NOVO: Funções para gerir ficheiros de produção
+            const handleProductionFileUpload = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                setIsUploading(true);
+                const newFiles = [];
+                for (const file of files) {
+                    try {
+                        const uploadedFile = await uploadFileWithProgress(file, setUploadProgress);
+                        newFiles.push(uploadedFile);
+                    } catch (error) {
+                        alert(`Falha no upload do ficheiro ${file.name}: ${error.message}`);
+                        setIsUploading(false);
+                        return;
+                    }
+                }
+                const taskDocRef = doc(db, "tasks", task.id);
+                await updateDoc(taskDocRef, {
+                    productionFiles: arrayUnion(...newFiles)
+                });
+                setIsUploading(false);
+                e.target.value = null;
+            };
+
+            const handleRemoveProductionFile = async (fileToRemove) => {
+                await deleteFileFromGCS(fileToRemove.url);
+                const taskDocRef = doc(db, "tasks", task.id);
+                await updateDoc(taskDocRef, {
+                    productionFiles: arrayRemove(fileToRemove)
+                });
+            };
             
             const handleAddComment = async () => {
                 if (!newComment.trim()) return;
@@ -712,6 +747,7 @@
             const approvalAttachments = task.approvalAttachments || [];
             const allArtsApproved = approvalAttachments.length > 0 && approvalAttachments.every(att => att.status === 'approved');
             const someArtRejected = approvalAttachments.some(att => att.status === 'rejected');
+            const productionFiles = task.productionFiles || [];
 
             const formatDate = (ts) => { if (!ts) return 'Sem data'; const date = new Date(ts.seconds * 1000); const userTimezoneOffset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR'); };
             const formatHistoryDate = (ts) => ts ? new Date(ts.seconds * 1000).toLocaleString('pt-BR') : '';
@@ -729,6 +765,7 @@
                         )}
                         
                         <div className="space-y-4">
+                            {/* ... (código dos detalhes da tarefa, como status, prioridade, etc.) ... */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div><label className="block text-sm font-medium text-gray-700">Status</label><select value={task.status} onChange={(e) => onUpdate(task.id, {status: e.target.value})} className="w-full border border-gray-300 rounded-md p-2 mt-1" disabled={isEditable}><option>A Fazer</option><option>Em Andamento</option><option>Em Aprovação</option><option>Concluído</option></select></div>
                                 <div><label className="block text-sm font-medium text-gray-700">Prioridade</label><select value={priority} onChange={(e) => setPriority(e.target.value)} className={`w-full border border-gray-300 rounded-md p-2 mt-1 font-semibold ${priorityColors[priority]}`} disabled={!isEditable}><option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option></select></div>
@@ -740,7 +777,45 @@
                                     )}
                                 </div>
                             </div>
-                            
+
+                            {/* NOVO: Secção para Ficheiros de Produção, visível apenas em tarefas concluídas */}
+                            {task.status === 'Concluído' && (
+                                <div className="border-t-4 border-green-500 bg-green-50 p-4 rounded-b-lg">
+                                    <h3 className="text-lg font-bold text-green-800 mb-3">Ficheiros para Produção</h3>
+                                    {isProductionManager && (
+                                        <div className="mb-4">
+                                            <label className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer">
+                                                <UploadCloud className="h-5 w-5"/>
+                                                <span>Carregar Ficheiro Final</span>
+                                                <input type="file" multiple onChange={handleProductionFileUpload} disabled={isUploading} accept="application/pdf" className="hidden"/>
+                                            </label>
+                                            {isUploading && <div className="text-sm text-center mt-2">A enviar... {uploadProgress}%</div>}
+                                        </div>
+                                    )}
+                                    {productionFiles.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                            {productionFiles.map((file, index) => (
+                                                <div key={index} className="relative group bg-white p-3 rounded-lg shadow-sm flex items-center justify-between">
+                                                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 truncate">
+                                                        <FileText className="w-8 h-8 text-green-700 flex-shrink-0"/>
+                                                        <span className="text-sm font-semibold text-gray-800 truncate" title={file.originalName}>{file.originalName}</span>
+                                                    </a>
+                                                    <div className="flex items-center">
+                                                        <button onClick={() => handleDownload(file.url, file.originalName)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-full" title="Download"><Download className="w-5 h-5"/></button>
+                                                        {isProductionManager && (
+                                                            <button onClick={() => handleRemoveProductionFile(file)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-full" title="Remover"><Trash2 className="w-5 h-5"/></button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-600">Nenhum ficheiro de produção foi adicionado.</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ... (restante do código do modal, como descrição, referências, etc.) ... */}
                             <div className="border-t pt-4"><p className="text-sm font-medium text-gray-700">Descrição</p>
                                 <RichTextEditor value={description} onChange={setDescription} placeholder="Descreva os detalhes..." readOnly={!isEditable} />
                             </div>
@@ -1179,7 +1254,8 @@
                         createdAt: serverTimestamp(), 
                         approvalAttachments: [], 
                         artHistory: [],
-                        comments: []
+                        comments: [],
+                        productionFiles: [] // NOVO: Inicia a tarefa com um array vazio
                     });
                     
                     const message = `Nova tarefa criada por ${taskData.requester}: "${taskData.title}"`;
@@ -1228,7 +1304,7 @@
             const handleDuplicateTask = (taskId) => {
                 const originalTask = tasks.find(t => t.id === taskId);
                 if(originalTask){
-                    const { id, createdAt, status, approvalAttachments, artHistory, comments, referenceFiles, ...restOfTask } = originalTask;
+                    const { id, createdAt, status, approvalAttachments, artHistory, comments, referenceFiles, productionFiles, ...restOfTask } = originalTask;
                     const duplicatedTaskData = {
                         ...restOfTask,
                         requester: currentUser,
@@ -1246,9 +1322,11 @@
                 const taskData = tasks.find(t => t.id === taskToDelete);
                 
                 if (taskData) {
+                    // Apaga todos os ficheiros associados do GCS
                     const filesToDelete = [
                         ...(taskData.referenceFiles || []),
-                        ...(taskData.approvalAttachments || [])
+                        ...(taskData.approvalAttachments || []),
+                        ...(taskData.productionFiles || []) // NOVO: Inclui ficheiros de produção
                     ];
                     
                     await Promise.all(filesToDelete.map(file => deleteFileFromGCS(file.url)));
