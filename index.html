@@ -70,13 +70,41 @@
         const db = window.firestore.getFirestore(app);
         const auth = window.firebAuth.getAuth(app);
 
-        // --- FUNÇÃO UTILITÁRIA ---
+        // --- FUNÇÕES UTILITÁRIAS GLOBAIS ---
         const isImageFile = (fileName) => {
             if (!fileName) return false;
             const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'];
             const extension = fileName.split('.').pop().toLowerCase();
             return imageExtensions.includes(extension);
         };
+
+        const API_BASE_URL = 'https://us-central1-gestao-de-artes---rigolim.cloudfunctions.net/api';
+
+        const deleteFileFromGCS = async (fileUrl) => {
+            if (!fileUrl) return;
+            try {
+                const urlParts = fileUrl.split('/');
+                const fileNameWithQuery = urlParts[urlParts.length - 1];
+                const fileName = fileNameWithQuery.split('?')[0];
+
+                if (!fileName) return;
+
+                const response = await fetch(`${API_BASE_URL}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: fileName })
+                });
+
+                if (!response.ok) {
+                    console.error('Falha ao apagar o ficheiro do GCS:', await response.text());
+                } else {
+                    console.log(`Ficheiro ${fileName} apagado do GCS.`);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao tentar apagar o ficheiro do GCS:', error);
+            }
+        };
+
 
         // --- COMPONENTES ---
         
@@ -253,7 +281,7 @@
                     const formData = new FormData();
                     formData.append('file', file);
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', `https://upload-api-641611102306.us-central1.run.app/upload`, true);
+                    xhr.open('POST', `${API_BASE_URL}/upload`, true);
                     
                     xhr.upload.onprogress = (event) => {
                         if (event.lengthComputable) {
@@ -311,7 +339,9 @@
                 e.target.value = null;
             };
             
-            const handleRemoveReferenceFile = (indexToRemove) => {
+            const handleRemoveReferenceFile = async (indexToRemove) => {
+                const fileToDelete = uploadedReferenceFiles[indexToRemove];
+                await deleteFileFromGCS(fileToDelete.url);
                 setUploadedReferenceFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
             };
 
@@ -385,7 +415,7 @@
                 formData.append('file', file);
 
                 try {
-                    const response = await fetch(`https://upload-api-641611102306.us-central1.run.app/upload`, {
+                    const response = await fetch(`${API_BASE_URL}/upload`, {
                         method: 'POST',
                         body: formData,
                     });
@@ -444,7 +474,6 @@
         const TaskDetailModal = ({ user, task: initialTask, onClose, onUpdate, onDelete, createNotification }) => {
             if (!initialTask) return null;
 
-            // --- ESTADOS PARA EDIÇÃO ---
             const [task, setTask] = useState(initialTask);
             const [title, setTitle] = useState(initialTask.title);
             const [dueDate, setDueDate] = useState(initialTask.dueDate ? new Date(initialTask.dueDate.seconds * 1000).toISOString().split('T')[0] : '');
@@ -463,7 +492,6 @@
             
             const { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } = window.firestore;
 
-            // --- VERIFICAÇÃO DE PERMISSÃO DE EDIÇÃO ---
             const currentUser = user.email.split('@')[0];
             const isOwner = currentUser === initialTask.requester;
             const isEditable = initialTask.status === 'A Fazer' && isOwner;
@@ -479,7 +507,6 @@
                 return () => unsubscribe();
             }, [initialTask.id]);
             
-            // --- LÓGICA DE SALVAR AO FECHAR ---
             const handleCloseAndSaveChanges = async () => {
                 if (isEditable) {
                     const updatedData = {};
@@ -505,7 +532,7 @@
                     const formData = new FormData();
                     formData.append('file', file);
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', `https://upload-api-641611102306.us-central1.run.app/upload`, true);
+                    xhr.open('POST', `${API_BASE_URL}/upload`, true);
                     xhr.upload.onprogress = (event) => {
                         if (event.lengthComputable) {
                             const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -549,8 +576,10 @@
                 e.target.value = null;
             };
 
-            const handleRemoveReferenceFile = (indexToRemove) => {
+            const handleRemoveReferenceFile = async (indexToRemove) => {
                 if (!isEditable) return;
+                const fileToDelete = referenceFiles[indexToRemove];
+                await deleteFileFromGCS(fileToDelete.url);
                 setReferenceFiles(prev => prev.filter((_, index) => index !== indexToRemove));
             };
             
@@ -568,6 +597,7 @@
                     const newFileUrl = uploadedFile.url;
 
                     if (attachmentToReplace) {
+                        await deleteFileFromGCS(attachmentToReplace.url);
                         const newVersion = (attachmentToReplace.version || 1) + 1;
                         const newAttachments = task.approvalAttachments.map(att =>
                             att.url === attachmentToReplace.url
@@ -625,6 +655,7 @@
 
             const handleConfirmDeleteAttachment = async () => {
                 if (!attachmentToDelete) return;
+                await deleteFileFromGCS(attachmentToDelete.url);
                 const taskDocRef = doc(db, "tasks", task.id);
                 await updateDoc(taskDocRef, {
                     approvalAttachments: arrayRemove(attachmentToDelete)
@@ -754,7 +785,6 @@
                                 {referenceFiles.length === 0 && <p className="text-sm text-gray-500">Nenhum arquivo de referência.</p>}
                             </div>
 
-                            {/* --- CÓDIGO RESTAURADO PARA FLUXO DE TRABALHO --- */}
                             {task.status !== 'A Fazer' && (
                                 <>
                                     {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{approvalAttachments.length > 0 ? approvalAttachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
@@ -1213,6 +1243,17 @@
 
             const handleDeleteTask = async () => {
                 if (!taskToDelete) return;
+                const taskData = tasks.find(t => t.id === taskToDelete);
+                
+                if (taskData) {
+                    const filesToDelete = [
+                        ...(taskData.referenceFiles || []),
+                        ...(taskData.approvalAttachments || [])
+                    ];
+                    
+                    await Promise.all(filesToDelete.map(file => deleteFileFromGCS(file.url)));
+                }
+
                 await deleteDoc(doc(db, "tasks", taskToDelete));
                 closeAllModals();
             };
