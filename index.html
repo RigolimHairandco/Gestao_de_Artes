@@ -81,7 +81,6 @@
             return imageExtensions.includes(extension);
         };
 
-        // NOVO: Função para verificar se o arquivo é um vídeo
         const isVideoFile = (fileName) => {
             if (!fileName) return false;
             const videoExtensions = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogg'];
@@ -393,8 +392,7 @@
                                     {isImageFile(file.originalName) ? (
                                         <img src={file.url} alt={file.originalName} className="h-20 w-20 object-cover rounded-md shadow-md"/>
                                     ) : isVideoFile(file.originalName) ? (
-                                        // NOVO: Preview para vídeo
-                                        <video src={file.url} className="h-20 w-20 object-cover rounded-md shadow-md bg-black" />
+                                        <video src={file.url} className="h-20 w-20 rounded-md shadow-md bg-black" />
                                     ) : (
                                         <div className="h-20 w-20 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center">
                                             <FileText className="w-8 h-8 text-gray-600"/>
@@ -598,7 +596,6 @@
                 setReferenceFiles(prev => prev.filter((_, index) => index !== indexToRemove));
             };
             
-            // ALTERADO: Lógica para substituir ou adicionar arte
             const handleArtFileUpload = async (e, attachmentToReplace = null) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -611,14 +608,13 @@
                     const taskDocRef = doc(db, "tasks", task.id);
 
                     if (attachmentToReplace) {
-                        // Lógica de substituição
                         await deleteFileFromGCS(attachmentToReplace.url);
                         
                         const newAttachmentData = {
                             ...attachmentToReplace,
                             originalName: uploadedFile.originalName,
                             url: uploadedFile.url,
-                            status: 'pending', // Reseta o status para pendente
+                            status: 'pending',
                             version: (attachmentToReplace.version || 1) + 1,
                             uploadedAt: new Date()
                         };
@@ -632,7 +628,6 @@
                         });
 
                     } else {
-                        // Lógica de adição (original)
                         const newAttachment = {
                             name: `Arte ${task.approvalAttachments.length + 1}`,
                             originalName: uploadedFile.originalName,
@@ -842,7 +837,7 @@
                                             {isImageFile(att.originalName) ? (
                                                 <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
                                             ) : isVideoFile(att.originalName) ? (
-                                                <video src={att.url} controls className={`h-28 w-28 object-cover rounded-md shadow-md bg-black ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
+                                                <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
                                             ) : (
                                                 <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}>
                                                     <FileText className="w-12 h-12 text-gray-600"/>
@@ -864,7 +859,7 @@
                                             {isImageFile(att.originalName) ? (
                                                 <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
                                             ) : isVideoFile(att.originalName) ? (
-                                                <video src={att.url} controls className={`h-28 w-28 object-cover rounded-md shadow-md bg-black ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
+                                                <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
                                             ) : (
                                                 <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}>
                                                     <FileText className="w-12 h-12 text-gray-600"/>
@@ -876,7 +871,7 @@
                                             {isImageFile(att.originalName) ? (
                                                 <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
                                             ) : isVideoFile(att.originalName) ? (
-                                                <video src={att.url} controls className={`h-28 w-28 object-cover rounded-md shadow-md bg-black ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
+                                                <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
                                             ) : (
                                                 <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}>
                                                     <FileText className="w-12 h-12 text-gray-600"/>
@@ -913,7 +908,7 @@
                                                 {isImageFile(file.originalName) ? (
                                                     <img src={file.url} alt={`Referência ${index + 1}`} className="h-28 w-28 object-cover rounded-md shadow-md"/>
                                                 ) : isVideoFile(file.originalName) ? (
-                                                    <video src={file.url} controls className="h-28 w-28 object-cover rounded-md shadow-md bg-black"/>
+                                                    <video src={file.url} controls className="h-28 w-28 rounded-md shadow-md bg-black"/>
                                                 ) : (
                                                     <div className="h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center">
                                                         <FileText className="w-12 h-12 text-gray-600"/>
