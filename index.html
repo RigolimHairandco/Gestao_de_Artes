@@ -1,3 +1,15 @@
+Claro\!
+
+Aqui está o código HTML completo com as alterações que discutimos (fechar os modais ao clicar fora). Este código já inclui a lógica para:
+
+  * **Salvar e fechar** a janela de detalhes ao clicar no fundo.
+  * **Cancelar e fechar** a janela de nova tarefa ao clicar no fundo.
+
+**Lembre-se:** Este código depende das **Regras de Segurança do Firebase** que configuramos na etapa anterior. As regras ficam no seu painel do Firebase, não neste arquivo.
+
+Pode copiar todo o conteúdo abaixo e substituir completamente o seu arquivo.
+
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -9,7 +21,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Firebase SDKs v9 Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         window.firebaseApp = initializeApp;
@@ -45,7 +56,7 @@
         const ChevronLeft = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m15 18-6-6 6-6"/></svg>);
         const ChevronRight = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>);
         const Download = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
-        const Settings = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>);
+        const Settings = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>);
         const Send = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>);
         const Bold = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>);
         const Italic = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg>);
@@ -371,7 +382,7 @@
                 });
             };
 
-            return (<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"><div className="bg-white rounded-lg shadow-xl p-4 md:p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto"><h2 className="text-2xl font-bold mb-4">{initialData ? "Duplicar Solicitação" : "Nova Solicitação de Arte"}</h2><button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Título</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Arte para post do Instagram" required /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Data de Entrega</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label><select value={priority} onChange={e => setPriority(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"><option>Baixa</option><option>Média</option><option>Alta</option></select></div></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Arte</label><input type="text" value={artType} onChange={e => setArtType(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Post para Feed, Story"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label><RichTextEditor value={description} onChange={setDescription} placeholder="Descreva os detalhes..." /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Links de Referência</label><textarea value={attachments} onChange={e => setAttachments(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-2" placeholder="https://drive.google.com/..."></textarea></div>
+            return (<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={(e) => { if (e.target === e.currentTarget) { onClose(); } }}><div className="bg-white rounded-lg shadow-xl p-4 md:p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto"><h2 className="text-2xl font-bold mb-4">{initialData ? "Duplicar Solicitação" : "Nova Solicitação de Arte"}</h2><button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Título</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Arte para post do Instagram" required /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Data de Entrega</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label><select value={priority} onChange={e => setPriority(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"><option>Baixa</option><option>Média</option><option>Alta</option></select></div></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Arte</label><input type="text" value={artType} onChange={e => setArtType(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 uppercase" placeholder="Ex: Post para Feed, Story"/></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label><RichTextEditor value={description} onChange={setDescription} placeholder="Descreva os detalhes..." /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Links de Referência</label><textarea value={attachments} onChange={e => setAttachments(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-2" placeholder="https://drive.google.com/..."></textarea></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Arquivos de Referência</label><input type="file" multiple onChange={handleFileSelectAndUpload} disabled={isUploading} accept="image/*,video/*,application/pdf" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"/></div>
             {isUploading && (
                 <div className="mt-2">
@@ -504,22 +515,6 @@
             
             const { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } = window.firestore;
 
-            const currentUser = user.email.split('@')[0];
-            const isOwner = currentUser === initialTask.requester;
-            const isEditable = initialTask.status === 'A Fazer' && isOwner;
-            const isProductionManager = user.email === 'andercleidesigner@gmail.com';
-
-            useEffect(() => {
-                const taskDocRef = doc(db, "tasks", initialTask.id);
-                const unsubscribe = onSnapshot(taskDocRef, (doc) => {
-                    if (doc.exists()) {
-                        const data = doc.data();
-                        setTask({ id: doc.id, ...data });
-                    }
-                });
-                return () => unsubscribe();
-            }, [initialTask.id]);
-            
             const handleCloseAndSaveChanges = async () => {
                 if (isEditable) {
                     const updatedData = {};
@@ -539,6 +534,29 @@
                 }
                 onClose();
             };
+
+            const handleBackdropClick = (e) => {
+                // Esta condição verifica se o clique foi no fundo escuro (e não no conteúdo do modal)
+                if (e.target === e.currentTarget) {
+                    handleCloseAndSaveChanges();
+                }
+            };
+            
+            const currentUser = user.email.split('@')[0];
+            const isOwner = currentUser === initialTask.requester;
+            const isEditable = initialTask.status === 'A Fazer' && isOwner;
+            const isProductionManager = user.email === 'andercleidesigner@gmail.com';
+
+            useEffect(() => {
+                const taskDocRef = doc(db, "tasks", initialTask.id);
+                const unsubscribe = onSnapshot(taskDocRef, (doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        setTask({ id: doc.id, ...data });
+                    }
+                });
+                return () => unsubscribe();
+            }, [initialTask.id]);
 
             const uploadFileWithProgress = (file, onProgress) => {
                 return new Promise((resolve, reject) => {
@@ -768,7 +786,7 @@
             const priorityColors = { 'Alta': 'text-red-600', 'Média': 'text-yellow-600', 'Baixa': 'text-green-600' };
 
             return (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={handleBackdropClick}>
                     <div className="bg-white rounded-lg shadow-xl p-4 md:p-6 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto">
                         <button onClick={handleCloseAndSaveChanges} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X className="h-6 w-6" /></button>
                         
@@ -834,51 +852,51 @@
                             {task.status !== 'A Fazer' && (
                                 <>
                                     {task.status === 'Em Andamento' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes Anexadas:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{approvalAttachments.length > 0 ? approvalAttachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-1"><button onClick={() => !task.approvalStarted && setAttachmentToDelete(att)} disabled={task.approvalStarted} className={`absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 z-10 ${task.approvalStarted ? 'opacity-50 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} title={task.approvalStarted ? "Não é possível excluir após o início da aprovação" : "Excluir Arte"}><X className="w-4 h-4"/></button><a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
-                                            {isImageFile(att.originalName) ? (
-                                                <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
-                                            ) : isVideoFile(att.originalName) ? (
-                                                <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
-                                            ) : (
-                                                <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}>
-                                                    <FileText className="w-12 h-12 text-gray-600"/>
-                                                    <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
-                                                </div>
-                                            )}
-                                        </a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleArtFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={(e) => handleArtFileUpload(e)} disabled={isUploading} accept="image/*,video/*,application/pdf,.psd,.ai,.eps" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>
-                                        {isUploading && (
-                                            <div className="mt-2">
-                                                <p className="text-sm text-center mb-1">A carregar...</p>
-                                                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-                                                </div>
-                                                <p className="text-center text-sm mt-1">{`${Math.round(uploadProgress)}%`}</p>
-                                            </div>
-                                        )}
-                                        </div>{approvalAttachments.length > 0 && !isUploading && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
+                                                {isImageFile(att.originalName) ? (
+                                                    <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
+                                                ) : isVideoFile(att.originalName) ? (
+                                                    <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}/>
+                                                ) : (
+                                                    <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ${att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-transparent'}`}>
+                                                        <FileText className="w-12 h-12 text-gray-600"/>
+                                                        <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
+                                                    </div>
+                                                )}
+                                            </a><div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p>{att.status === 'rejected' && (<div className="space-y-1 mt-1"><p className="text-xs text-red-600 truncate" title={att.alterationNotes}>{att.alterationNotes}</p><label className="cursor-pointer text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-md hover:bg-yellow-500 w-full inline-block">{isUploading ? 'A carregar...' : `Carregar v${(att.version || 1) + 1}`}<input type="file" onChange={(e) => handleArtFileUpload(e, att)} disabled={isUploading} className="hidden"/></label></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte anexada.</p>}</div></div><div className="border-t pt-4"><p className="text-sm font-medium text-gray-700 mb-2">Anexar Nova Arte</p><input type="file" onChange={(e) => handleArtFileUpload(e)} disabled={isUploading} accept="image/*,video/*,application/pdf,.psd,.ai,.eps" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 disabled:opacity-50"/>
+                                                {isUploading && (
+                                                    <div className="mt-2">
+                                                        <p className="text-sm text-center mb-1">A carregar...</p>
+                                                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                                                        </div>
+                                                        <p className="text-center text-sm mt-1">{`${Math.round(uploadProgress)}%`}</p>
+                                                    </div>
+                                                )}
+                                                </div>{approvalAttachments.length > 0 && !isUploading && (<div className="border-t pt-4"><button onClick={handleSendForApproval} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg w-full">Enviar para Aprovação</button></div>)}</div> )}
                                     {task.status === 'Em Aprovação' && ( <div className="border-t pt-4 space-y-4"> <div><p className="text-sm font-medium text-gray-700">Artes para Aprovação:</p><div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">{approvalAttachments.length > 0 ? approvalAttachments.map((att, i) => (<div key={i} className="relative group flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
-                                            {isImageFile(att.originalName) ? (
-                                                <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
-                                            ) : isVideoFile(att.originalName) ? (
-                                                <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
-                                            ) : (
-                                                <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}>
-                                                    <FileText className="w-12 h-12 text-gray-600"/>
-                                                    <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
-                                                </div>
-                                            )}
-                                        </a> <div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> {att.status !== 'approved' && att.status !== 'rejected' && (<div className="flex justify-center gap-2"><button onClick={() => handleAttachmentStatusChange(i, 'approved')} className="p-1.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Aprovar"><CheckCircle2 className="w-5 h-5"/></button><button onClick={() => {setOpenAlterationIndex(i); setAlterationNotes(att.alterationNotes || '');}} className="p-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200" title="Solicitar Alteração"><RefreshCw className="w-5 h-5"/></button></div>)} {att.status === 'approved' && <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-4 h-4"/></div>} {att.status === 'rejected' && <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><RefreshCw className="w-4 h-4"/></div>} {openAlterationIndex === i && (<div><textarea value={alterationNotes} onChange={(e) => setAlterationNotes(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-1 text-xs" placeholder="Descreva a alteração..."></textarea><button onClick={() => {handleAttachmentStatusChange(i, 'rejected', alterationNotes); setOpenAlterationIndex(null);}} className="text-xs bg-blue-500 text-white px-2 py-1 mt-1 rounded-md hover:bg-blue-600 w-full">Salvar Alteração</button></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte para aprovação.</p>}</div></div><div className="border-t pt-4 flex flex-col gap-3">{someArtRejected && <button onClick={handleReturnForAdjustment} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg w-full">Devolver para Ajuste</button>}{allArtsApproved && <button onClick={handleFinalizeTask} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Finalizar Tarefa Aprovada</button>}</div></div> )}
+                                                {isImageFile(att.originalName) ? (
+                                                    <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
+                                                ) : isVideoFile(att.originalName) ? (
+                                                    <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}/>
+                                                ) : (
+                                                    <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 transition-all ${ att.status === 'approved' ? 'ring-green-500' : att.status === 'rejected' ? 'ring-red-500' : 'ring-purple-400' }`}>
+                                                        <FileText className="w-12 h-12 text-gray-600"/>
+                                                        <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
+                                                    </div>
+                                                )}
+                                            </a> <div className="text-center"><p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> {att.status !== 'approved' && att.status !== 'rejected' && (<div className="flex justify-center gap-2"><button onClick={() => handleAttachmentStatusChange(i, 'approved')} className="p-1.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Aprovar"><CheckCircle2 className="w-5 h-5"/></button><button onClick={() => {setOpenAlterationIndex(i); setAlterationNotes(att.alterationNotes || '');}} className="p-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200" title="Solicitar Alteração"><RefreshCw className="w-5 h-5"/></button></div>)} {att.status === 'approved' && <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-4 h-4"/></div>} {att.status === 'rejected' && <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><RefreshCw className="w-4 h-4"/></div>} {openAlterationIndex === i && (<div><textarea value={alterationNotes} onChange={(e) => setAlterationNotes(e.target.value)} rows="2" className="w-full border border-gray-300 rounded-md p-1 text-xs" placeholder="Descreva a alteração..."></textarea><button onClick={() => {handleAttachmentStatusChange(i, 'rejected', alterationNotes); setOpenAlterationIndex(null);}} className="text-xs bg-blue-500 text-white px-2 py-1 mt-1 rounded-md hover:bg-blue-600 w-full">Salvar Alteração</button></div>)}</div></div>)) : <p className="text-sm text-gray-500">Nenhuma arte para aprovação.</p>}</div></div><div className="border-t pt-4 flex flex-col gap-3">{someArtRejected && <button onClick={handleReturnForAdjustment} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg w-full">Devolver para Ajuste</button>}{allArtsApproved && <button onClick={handleFinalizeTask} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Finalizar Tarefa Aprovada</button>}</div></div> )}
                                     {task.status === 'Concluído' && ( <div className="border-t pt-4 space-y-4"> <div> <p className="text-sm font-medium text-gray-700">Artes Aprovadas:</p> <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4"> {approvalAttachments.length > 0 ? approvalAttachments.filter(att => att.status === 'approved').map((att, i) => { const newFilename = att.originalName; const isDownloadDisabled = productionFiles.length > 0; return ( <div key={i} className="flex flex-col items-center space-y-2"> <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.originalName}>
-                                            {isImageFile(att.originalName) ? (
-                                                <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
-                                            ) : isVideoFile(att.originalName) ? (
-                                                <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
-                                            ) : (
-                                                <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}>
-                                                    <FileText className="w-12 h-12 text-gray-600"/>
-                                                    <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
-                                                </div>
-                                            )}
-                                        </a> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} disabled={isDownloadDisabled} className={`mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed`} title={isDownloadDisabled ? "Download desativado pois existe um ficheiro de produção" : "Download"}><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
+                                                {isImageFile(att.originalName) ? (
+                                                    <img src={att.url} alt={att.name} className={`h-28 w-28 object-cover rounded-md shadow-md ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
+                                                ) : isVideoFile(att.originalName) ? (
+                                                    <video src={att.url} controls className={`h-28 w-28 rounded-md shadow-md bg-black ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}/>
+                                                ) : (
+                                                    <div className={`h-28 w-28 rounded-md shadow-md bg-gray-200 flex flex-col items-center justify-center p-2 text-center ring-2 ring-green-500 ${isDownloadDisabled ? 'opacity-50' : ''}`}>
+                                                        <FileText className="w-12 h-12 text-gray-600"/>
+                                                        <span className="text-sm text-gray-700 font-bold mt-2">{att.originalName.split('.').pop().toUpperCase()}</span>
+                                                    </div>
+                                                )}
+                                            </a> <div className="text-center"> <p className="text-xs font-semibold">{att.name} {att.version > 1 && `(v${att.version})`}</p> <button onClick={() => handleDownload(att.url, newFilename)} disabled={isDownloadDisabled} className={`mt-1 p-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed`} title={isDownloadDisabled ? "Download desativado pois existe um ficheiro de produção" : "Download"}><Download className="w-5 h-5"/></button> </div> </div> )}) : <p className="text-sm text-gray-500">Nenhuma arte aprovada encontrada.</p>} </div> </div> </div> )}
                                 </>
                             )}
                             
@@ -1499,3 +1517,4 @@
 
 </body>
 </html>
+```
