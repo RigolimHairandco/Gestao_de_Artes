@@ -268,7 +268,6 @@
                     <div className="flex flex-col text-sm text-gray-500 mt-2 space-y-1">
                         <div className="flex items-center gap-1"><CalendarIcon className="h-4 w-4" /><span>{formatDate(task.dueDate)}</span></div>
                         <div className="flex items-center gap-1"><UserIcon className="w-4 h-4" /><span>{task.requester || 'N/A'}</span></div>
-                        {/* CAMPO DE DESIGNER ADICIONADO AO CARD */}
                         {task.assignedDesigner && (
                             <div className="flex items-center gap-1"><Paintbrush className="w-4 h-4 text-blue-600" /><span>{task.assignedDesigner}</span></div>
                         )}
@@ -283,7 +282,6 @@
             const [description, setDescription] = useState(initialData?.description || '');
             const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate.seconds * 1000).toISOString().split('T')[0] : '');
             const [priority, setPriority] = useState(initialData?.priority || 'Média');
-            // NOVO ESTADO PARA O DESIGNER
             const [assignedDesigner, setAssignedDesigner] = useState(initialData?.assignedDesigner || 'Anderclei');
             const [artType, setArtType] = useState(initialData?.artType || '');
             const [attachments, setAttachments] = useState(initialData?.attachments || '');
@@ -371,7 +369,6 @@
                     requester: user.email.split('@')[0],
                     dueDate: dueDate ? new Date(dueDate) : null, 
                     priority,
-                    // ADICIONADO CAMPO DE DESIGNER AO SALVAR
                     assignedDesigner: assignedDesigner,
                     artType: artType.toUpperCase(),
                     attachments,
@@ -383,7 +380,6 @@
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div><label className="block text-sm font-medium text-gray-700 mb-1">Data de Entrega</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"/></div>
                 <div><label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label><select value={priority} onChange={e => setPriority(e.target.value)} className="w-full border border-gray-300 rounded-md p-2"><option>Baixa</option><option>Média</option><option>Alta</option></select></div>
-                {/* NOVO CAMPO DE SELEÇÃO DE DESIGNER */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Atribuir ao Designer</label>
                     <select value={assignedDesigner} onChange={e => setAssignedDesigner(e.target.value)} className="w-full border border-gray-300 rounded-md p-2">
@@ -504,13 +500,14 @@
             );
         };
         
-        const TaskDetailModal = ({ user, task: initialTask, onClose, onUpdate, onDelete, createNotification }) => {
+        const TaskDetailModal = ({ user, task: initialTask, onClose, onUpdate, onDelete, createNotification, isAdmin }) => {
             if (!initialTask) return null;
 
             const [task, setTask] = useState(initialTask);
             const [title, setTitle] = useState(initialTask.title);
             const [dueDate, setDueDate] = useState(initialTask.dueDate ? new Date(initialTask.dueDate.seconds * 1000).toISOString().split('T')[0] : '');
             const [priority, setPriority] = useState(initialTask.priority);
+            const [assignedDesigner, setAssignedDesigner] = useState(initialTask.assignedDesigner || 'Anderclei');
             const [artType, setArtType] = useState(initialTask.artType);
             const [description, setDescription] = useState(initialTask.description || '');
             const [linkAttachments, setLinkAttachments] = useState(initialTask.attachments || '');
@@ -524,12 +521,16 @@
             const [newComment, setNewComment] = useState('');
             
             const { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } = window.firestore;
+            
+            useEffect(() => {
+                setAssignedDesigner(task.assignedDesigner || 'Anderclei');
+            }, [task.assignedDesigner]);
 
             const handleCloseAndSaveChanges = async () => {
+                const updatedData = {};
+                const initialDueDateStr = initialTask.dueDate ? new Date(initialTask.dueDate.seconds * 1000).toISOString().split('T')[0] : '';
+                
                 if (isEditable) {
-                    const updatedData = {};
-                    const initialDueDateStr = initialTask.dueDate ? new Date(initialTask.dueDate.seconds * 1000).toISOString().split('T')[0] : '';
-
                     if (title !== initialTask.title) updatedData.title = title.toUpperCase();
                     if (dueDate !== initialDueDateStr) updatedData.dueDate = dueDate ? new Date(dueDate) : null;
                     if (priority !== initialTask.priority) updatedData.priority = priority;
@@ -537,11 +538,16 @@
                     if (description !== (initialTask.description || '')) updatedData.description = description;
                     if (linkAttachments !== (initialTask.attachments || '')) updatedData.attachments = linkAttachments;
                     if (JSON.stringify(referenceFiles) !== JSON.stringify(initialTask.referenceFiles || [])) updatedData.referenceFiles = referenceFiles;
-
-                    if (Object.keys(updatedData).length > 0) {
-                        await onUpdate(initialTask.id, updatedData);
-                    }
                 }
+
+                if (assignedDesigner !== initialTask.assignedDesigner) {
+                    updatedData.assignedDesigner = assignedDesigner;
+                }
+
+                if (Object.keys(updatedData).length > 0) {
+                    await onUpdate(initialTask.id, updatedData);
+                }
+                
                 onClose();
             };
 
@@ -555,6 +561,10 @@
             const isOwner = currentUser === initialTask.requester;
             const isEditable = initialTask.status === 'A Fazer' && isOwner;
             const isProductionManager = user.email === 'andercleidesigner@gmail.com';
+            
+            // --- NOVA LÓGICA DE PERMISSÃO PARA ALTERAR DESIGNER ---
+            const isRequester = currentUser === task.requester;
+            const canChangeDesigner = isAdmin || (isRequester && task.status === 'A Fazer');
 
             useEffect(() => {
                 const taskDocRef = doc(db, "tasks", initialTask.id);
@@ -807,10 +817,20 @@
                         
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div><label className="block text-sm font-medium text-gray-700">Status</label><select value={task.status} onChange={(e) => onUpdate(task.id, {status: e.target.value})} className="w-full border border-gray-300 rounded-md p-2 mt-1" disabled={isEditable}><option>A Fazer</option><option>Em Andamento</option><option>Em Aprovação</option><option>Concluído</option></select></div>
+                                <div><label className="block text-sm font-medium text-gray-700">Status</label><select value={task.status} onChange={(e) => onUpdate(task.id, {status: e.target.value})} className="w-full border border-gray-300 rounded-md p-2 mt-1" disabled={isEditable || !isAdmin}><option>A Fazer</option><option>Em Andamento</option><option>Em Aprovação</option><option>Concluído</option></select></div>
                                 <div><label className="block text-sm font-medium text-gray-700">Prioridade</label><select value={priority} onChange={(e) => setPriority(e.target.value)} className={`w-full border border-gray-300 rounded-md p-2 mt-1 font-semibold ${priorityColors[priority]}`} disabled={!isEditable}><option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option></select></div>
-                                {/* Exibição do designer na tela de detalhes */}
-                                <div><label className="block text-sm font-medium text-gray-700">Designer</label><p className="text-gray-600 mt-1 p-2 border rounded-md bg-gray-50 min-h-[42px]">{task.assignedDesigner || 'Não atribuído'}</p></div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Designer</label>
+                                    {/* CAMPO DE DESIGNER COM LÓGICA DE PERMISSÃO */}
+                                    {canChangeDesigner ? (
+                                        <select value={assignedDesigner} onChange={e => setAssignedDesigner(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 mt-1">
+                                            <option>Anderclei</option>
+                                            <option>Daniela</option>
+                                        </select>
+                                    ) : (
+                                        <p className="text-gray-600 mt-1 p-2 border rounded-md bg-gray-50 min-h-[42px]">{task.assignedDesigner || 'Não atribuído'}</p>
+                                    )}
+                                </div>
                                 <div><label className="block text-sm font-medium text-gray-700">Tipo de Arte</label>
                                     {isEditable ? (
                                         <input type="text" value={artType} onChange={e => setArtType(e.target.value)} className="w-full border border-gray-300 rounded-md p-2 mt-1 uppercase" />
@@ -1244,7 +1264,6 @@
             
             const { collection, query, where, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, orderBy } = window.firestore;
             
-            // --- NOVO BLOCO DE LÓGICA DE PERMISSÃO ---
             const currentUserEmail = user.email;
             const currentUser = currentUserEmail.split('@')[0];
 
@@ -1259,10 +1278,8 @@
             const isSettingsAdmin = settingsAdmins.includes(currentUserEmail);
             const canSeeAllTasks = allSeeingUsers.includes(currentUserEmail);
             const loggedInDesignerName = designerMapping[currentUserEmail];
-            // --- FIM DO NOVO BLOCO ---
 
             useEffect(() => {
-                // --- NOVA LÓGICA DE CONSULTA DE TAREFAS ---
                 let tasksQuery;
 
                 if (canSeeAllTasks) {
@@ -1272,7 +1289,6 @@
                 } else {
                     tasksQuery = query(collection(db, "tasks"), where("requester", "==", currentUser));
                 }
-                // --- FIM DA NOVA LÓGICA ---
 
                 const unsubscribeTasks = onSnapshot(tasksQuery, (tasksSnapshot) => {
                     const tasksData = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1464,7 +1480,6 @@
                                     {unreadCount > 0 && <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>}
                                 </button>
                             </div>
-                            {/* AJUSTE FINO DE PERMISSÃO PARA CONFIGURAÇÕES */}
                             {isSettingsAdmin && (
                                 <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 rounded-full hover:bg-gray-200" title="Configurações"><Settings className="h-5 w-5"/></button>
                             )}
@@ -1512,7 +1527,7 @@
                     <div className="no-print">
                         {isNotificationsOpen && <NotificationsPanel notifications={notifications} onNotificationClick={handleNotificationClick} onClose={() => setIsNotificationsOpen(false)} />}
                         {isFormModalOpen && <TaskFormModal user={user} onClose={closeAllModals} onSave={handleAddTask} initialData={taskToDuplicate} />}
-                        {selectedTask && <TaskDetailModal user={user} task={selectedTask} onClose={closeAllModals} onUpdate={handleUpdateTask} onDelete={confirmDeleteTask} createNotification={createNotification} />}
+                        {selectedTask && <TaskDetailModal user={user} task={selectedTask} onClose={closeAllModals} onUpdate={handleUpdateTask} onDelete={confirmDeleteTask} createNotification={createNotification} isAdmin={canSeeAllTasks} />}
                         {isDeleteModalOpen && <ConfirmationModal message="Tem certeza que deseja excluir esta tarefa?" onConfirm={handleDeleteTask} onCancel={closeAllModals} />}
                         {isSettingsModalOpen && <SettingsModal currentSettings={settings} onSave={handleSaveSettings} onClose={closeAllModals} />}
                     </div>
